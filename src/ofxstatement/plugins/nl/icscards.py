@@ -147,7 +147,20 @@ should be equal to the end balance ({})".
                 self.end_balance = Parser.get_amount(row[-2], row[-1])
 
             elif re.search(statement_expr, line):
-                assert(len(row) >= 5 and len(row) <= 8)
+                # payee (column 2), place and contry may be something like:
+                #
+                # THY|2357312380512|Istanbul|US
+                #
+                # hence four columns instead of three, so combine the first two
+                country = re.compile("^[A-Z][A-Z]$")
+                for i in reversed(range(len(row))):
+                    if country.match(row[i]):
+                        # Should have 4 columns to the left. If not: reduce.
+                        while i > 4:
+                            row[2] += ' ' + row[3]
+                            del row[3]
+                            i -= 1
+                        break
 
                 if len(row) >= 6 and len(row) <= 7 and len(row[2]) > 25:
                     # 04 sep | 05 sep | NEWREST WAGONS LITS FRANCPARIS ...

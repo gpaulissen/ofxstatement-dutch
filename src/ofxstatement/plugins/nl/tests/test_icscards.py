@@ -103,10 +103,8 @@ transactie   boeking                                                            
         self.assertEqual(statement.bank_id, "ABNANL2A")
         self.assertEqual(statement.account_id, "99999999999")
         self.assertEqual(statement.account_type, "CHECKING")
-
         self.assertEqual(statement.start_balance, Decimal('-1311.73'))
         self.assertEqual(statement.start_date, datetime.strptime("2019-08-21", parser.date_format).date())
-
         self.assertEqual(statement.end_balance, Decimal('-1320.55'))
         self.assertEqual(statement.end_date, datetime.strptime("2019-09-17", parser.date_format).date())
 
@@ -135,12 +133,31 @@ transactie   boeking                                                            
         self.assertEqual(statement.bank_id, "ABNANL2A")
         self.assertEqual(statement.account_id, "99999999999")
         self.assertEqual(statement.account_type, "CHECKING")
-
         self.assertEqual(statement.start_balance, Decimal('-893.31'))
         self.assertEqual(statement.start_date, datetime.strptime("2018-12-21", parser.date_format).date())
-
         self.assertEqual(statement.end_balance, Decimal('-1156.34'))
         self.assertEqual(statement.end_date, datetime.strptime("2019-01-17", parser.date_format).date())
+
+    def test_error(self):
+        # Create and configure parser:
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'icscards_error.txt')
+        parser = Plugin(None, None).get_parser(text_filename)
+
+        # And parse:
+        statement = parser.parse()
+
+        self.assertEqual(statement.currency, 'EUR')
+        self.assertEqual(statement.bank_id, "ABNANL2A")
+        self.assertEqual(statement.account_id, "99999999999")
+        self.assertEqual(statement.account_type, "CHECKING")
+        self.assertEqual(statement.start_balance, Decimal('-1753.69'))
+        self.assertEqual(statement.end_balance, Decimal('-1325.11'))
+
+        self.assertEqual(statement.lines[6].payee, "THY 2357312380512")
+        self.assertEqual(statement.lines[6].memo, "Istanbul (US)")
+        self.assertEqual(statement.lines[16].payee, "TOTAL 4375462")
+        self.assertEqual(statement.lines[16].memo, "33PESSAC (FR)")
 
     @pytest.mark.xfail(raises=AttributeError)
     def test_fail(self):
