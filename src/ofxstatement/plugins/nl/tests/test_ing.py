@@ -21,7 +21,7 @@ class ParserTest(TestCase):
 "20200213","Kwijtschelding","NL99INGB9999999999","","VZ","Bij","0,00","Verzamelbetaling","Valutadatum: 13-02-2020"
 "20191213","PAULISSEN G J L M","NL99INGB9999999999","NL99ASNB9999999999","OV","Bij","20,00","Overschrijving","Naam: PAULISSEN G J L M Omschrijving: Kosten rekening IBAN: NL81ASNB0708271685 Valutadatum: 13-12-2019"
 "20191213","Kosten OranjePakket","NL99INGB9999999999","","DV","Af","0,31","Diversen","25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019"
-
+"20191213","Kosten OranjePakket","NL99INGB9999999999","","DV","Af","0,31","Diversen","25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019"
             ''')
         f = io.StringIO(csv)
 
@@ -42,7 +42,8 @@ class ParserTest(TestCase):
         self.assertIsNone(statement.end_balance)
         self.assertEqual(statement.end_date, datetime.strptime("20200213", parser.date_format))
 
-        self.assertEqual(len(statement.lines), 4)
+        # Amount of 0 is skipped
+        self.assertEqual(len(statement.lines), 5)
         self.assertEqual(statement.lines[0].amount, Decimal('-1.25'))
         self.assertEqual(statement.lines[0].payee, None)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
@@ -63,6 +64,11 @@ class ParserTest(TestCase):
         self.assertEqual(statement.lines[3].payee, None)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
         self.assertEqual(statement.lines[3].memo, "Kosten OranjePakket, 25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019")
+
+        self.assertEqual(statement.lines[4].amount, Decimal('-0.31'))
+        self.assertEqual(statement.lines[4].payee, None)
+        # "Naam / Omschrijving" is prepended to "Mededelingen"
+        self.assertEqual(statement.lines[4].memo, "Kosten OranjePakket, 25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019 #8")
 
     @pytest.mark.xfail(raises=ParseError)
     def test_fail(self):

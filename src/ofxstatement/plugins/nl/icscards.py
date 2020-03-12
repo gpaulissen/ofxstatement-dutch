@@ -6,13 +6,16 @@ import io
 from decimal import Decimal
 from datetime import datetime
 from subprocess import check_output, CalledProcessError
+import logging
 
 from ofxstatement import plugin, parser
-from ofxstatement.statement import Statement, StatementLine
-from ofxstatement.statement import generate_transaction_id, recalculate_balance
+from ofxstatement.statement import StatementLine
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class Plugin(plugin.Plugin):
@@ -38,6 +41,7 @@ class Plugin(plugin.Plugin):
 
 class Parser(parser.StatementParser):
     def __init__(self, fin):
+        super().__init__()
         self.fin = fin
 
     def parse(self):
@@ -52,9 +56,6 @@ class Parser(parser.StatementParser):
         # Need to parse "05 mei" i.e. "05 may"
         locale.setlocale(category=locale.LC_ALL, locale="Dutch")
         try:
-            self.amount_total = 0
-            self.statement = Statement()
-
             # Python 3 needed
             stmt = super().parse()
 
@@ -63,18 +64,10 @@ class Parser(parser.StatementParser):
             stmt.account_id = self.account_id
 
             # for stmt.start_date
-            recalculate_balance(stmt)
+            stmt.recalculate_balance()
             stmt.start_balance = self.start_balance
             stmt.end_date = self.page_date
             stmt.end_balance = self.end_balance
-
-            assert self.start_balance + self.amount_total == self.end_balance,\
-                print("Start balance ({}) plus the total amount ({}) \
-should be equal to the end balance ({})".
-                      format(self.start_balance,
-                             self.amount_total,
-                             self.end_balance))
-
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
 
@@ -111,6 +104,11 @@ should be equal to the end balance ({})".
         def convert_str_to_list(str, max_items=None, sep=r'\s\s+|\t|\n'):
             return [x for x in re.split(sep, str)[0:max_items]]
 
+        global logger
+
+        first_line = True
+        first_line_row = ['International Card Services BV', 'www.icscards.nl']
+
         new_page = False
         new_page_row = ['Datum', 'ICS-klantnummer', 'Volgnummer', 'Bladnummer']
 
@@ -124,8 +122,16 @@ should be equal to the end balance ({})".
         # breakpoint()
         for line in self.fin:
             line = line.strip()
+
+            logger.debug('line: ' + line)
+
             # to ease the parsing pain
             row = convert_str_to_list(line)
+
+            if first_line and len(row) > 1:
+                assert row == first_line_row,\
+                    "Expected: {0}\nActual: {1}".format(first_line_row, row)
+                first_line = False
 
             if len(row) == 2 and row[1][0:5] == 'BIC: ':
                 self.bank_id = row[1][5:]
@@ -193,6 +199,9 @@ should be equal to the end balance ({})".
                 d = add_years(d, 1)
             return add_years(d, -1)
 
+        global logger
+
+        logger.debug('row: ' + str(row))
         assert(len(row) in [5, 7, 8])
 
         stmt_line = None
@@ -214,13 +223,17 @@ should be equal to the end balance ({})".
         # Skip amount in foreign currency
         amount = Parser.get_amount(row[-2], row[-1])
 
-        self.amount_total += amount
         # Remove zero-value notifications
         if amount != 0:
             stmt_line = StatementLine(date=date,
                                       memo=memo,
                                       amount=amount)
-            stmt_line.id = generate_transaction_id(stmt_line)
             stmt_line.payee = payee
+            try:
+                stmt_line.generate_transaction_id()
+            except:
+                # include record number so the memo gets unique
+                stmt_line.memo = stmt_line.memo + ' #' + str(self.cur_record)
+                stmt_line.generate_transaction_id()
 
         return stmt_line

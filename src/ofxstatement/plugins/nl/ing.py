@@ -4,8 +4,7 @@ import sys
 
 from ofxstatement import plugin, parser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import Statement, BankAccount
-from ofxstatement.statement import generate_transaction_id, recalculate_balance
+from ofxstatement.statement import BankAccount
 
 
 # Need Python 3 for super() syntax
@@ -103,10 +102,8 @@ class Parser(parser.CsvStatementParser):
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement = Statement(bank_id="INGBNL2AXXX",
-                                   account_id=None,
-                                   currency="EUR",
-                                   account_type="CHECKING")
+        self.statement.bank_id = "INGBNL2AXXX"
+        self.statement.currency = "EUR"
 
     def parse(self):
         """Main entry point for parsers
@@ -118,7 +115,7 @@ class Parser(parser.CsvStatementParser):
         # Python 3 needed
         stmt = super().parse()
 
-        recalculate_balance(stmt)
+        stmt.recalculate_balance()
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
         # But keep the dates.
@@ -174,7 +171,13 @@ this line's account: {}".format(self.statement.account_id, line[2])
                 return None
 
             # Determine some fields not in the self.mappings
-            stmt_line.id = generate_transaction_id(stmt_line)
+
+            try:
+                stmt_line.generate_transaction_id()
+            except:
+                # include record number so the memo gets unique
+                stmt_line.memo = stmt_line.memo + ' #' + str(self.cur_record)
+                stmt_line.generate_transaction_id()
 
             if stmt_line.amount < 0:
                 stmt_line.trntype = "DEBIT"
