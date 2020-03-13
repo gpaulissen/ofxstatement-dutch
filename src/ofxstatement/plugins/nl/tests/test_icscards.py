@@ -176,7 +176,9 @@ transactie   boeking                                                            
         self.assertEqual(statement.end_balance, Decimal('-1320.55'))
 
         self.assertEqual(statement.lines[7].amount, Decimal('-5.05'))
+        self.assertEqual(statement.lines[7].memo, 'MONTIGNY LE B (FR)')
         self.assertEqual(statement.lines[8].amount, Decimal('-5.05'))
+        self.assertEqual(statement.lines[8].memo, 'MONTIGNY LE B (FR) #2')
         self.assertNotEqual(statement.lines[7].id, statement.lines[8].id)
 
     @pytest.mark.xfail(raises=AttributeError)

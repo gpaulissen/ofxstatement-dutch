@@ -4,8 +4,8 @@ import sys
 
 from ofxstatement import plugin, parser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import BankAccount
-
+from ofxstatement.statement import BankAccount, recalculate_balance
+from ofxstatement.statement import generate_unique_transaction_id
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -104,6 +104,7 @@ class Parser(parser.CsvStatementParser):
         # Use the BIC code for ING Netherlands
         self.statement.bank_id = "INGBNL2AXXX"
         self.statement.currency = "EUR"
+        self.unique_id_set = set()
 
     def parse(self):
         """Main entry point for parsers
@@ -115,7 +116,7 @@ class Parser(parser.CsvStatementParser):
         # Python 3 needed
         stmt = super().parse()
 
-        stmt.recalculate_balance()
+        recalculate_balance(stmt)
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
         # But keep the dates.
@@ -172,12 +173,11 @@ this line's account: {}".format(self.statement.account_id, line[2])
 
             # Determine some fields not in the self.mappings
 
-            try:
-                stmt_line.generate_transaction_id()
-            except:
-                # include record number so the memo gets unique
-                stmt_line.memo = stmt_line.memo + ' #' + str(self.cur_record)
-                stmt_line.generate_transaction_id()
+            stmt_line.id, counter = \
+                generate_unique_transaction_id(stmt_line, self.unique_id_set)
+            if counter != 0:
+                # include counter so the memo gets unique
+                stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
 
             if stmt_line.amount < 0:
                 stmt_line.trntype = "DEBIT"

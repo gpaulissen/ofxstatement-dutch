@@ -9,7 +9,8 @@ from subprocess import check_output, CalledProcessError
 import logging
 
 from ofxstatement import plugin, parser
-from ofxstatement.statement import StatementLine
+from ofxstatement.statement import StatementLine, recalculate_balance
+from ofxstatement.statement import generate_unique_transaction_id
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -43,6 +44,7 @@ class Parser(parser.StatementParser):
     def __init__(self, fin):
         super().__init__()
         self.fin = fin
+        self.unique_id_set = set()
 
     def parse(self):
         """Main entry point for parsers
@@ -64,7 +66,7 @@ class Parser(parser.StatementParser):
             stmt.account_id = self.account_id
 
             # for stmt.start_date
-            stmt.recalculate_balance()
+            recalculate_balance(stmt)
             stmt.start_balance = self.start_balance
             stmt.end_date = self.page_date
             stmt.end_balance = self.end_balance
@@ -229,11 +231,10 @@ class Parser(parser.StatementParser):
                                       memo=memo,
                                       amount=amount)
             stmt_line.payee = payee
-            try:
-                stmt_line.generate_transaction_id()
-            except:
-                # include record number so the memo gets unique
-                stmt_line.memo = stmt_line.memo + ' #' + str(self.cur_record)
-                stmt_line.generate_transaction_id()
+            stmt_line.id, counter = \
+                generate_unique_transaction_id(stmt_line, self.unique_id_set)
+            if counter != 0:
+                # include counter so the memo gets unique
+                stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
 
         return stmt_line

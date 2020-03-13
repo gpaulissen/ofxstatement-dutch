@@ -68,7 +68,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.lines[4].amount, Decimal('-0.31'))
         self.assertEqual(statement.lines[4].payee, None)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
-        self.assertEqual(statement.lines[4].memo, "Kosten OranjePakket, 25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019 #8")
+        self.assertEqual(statement.lines[4].memo, "Kosten OranjePakket, 25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019 #2")
 
     @pytest.mark.xfail(raises=ParseError)
     def test_fail(self):
