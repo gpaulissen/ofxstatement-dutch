@@ -40,7 +40,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.start_date, datetime.strptime("20191213", parser.date_format))
 
         self.assertIsNone(statement.end_balance)
-        self.assertEqual(statement.end_date, datetime.strptime("20200213", parser.date_format))
+        self.assertEqual(statement.end_date, datetime.strptime("20200214", parser.date_format))
 
         # Amount of 0 is skipped
         self.assertEqual(len(statement.lines), 5)

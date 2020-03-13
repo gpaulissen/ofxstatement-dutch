@@ -9,7 +9,7 @@ from subprocess import check_output, CalledProcessError
 import logging
 
 from ofxstatement import plugin, parser
-from ofxstatement.statement import StatementLine, recalculate_balance
+from ofxstatement.statement import StatementLine
 from ofxstatement.statement import generate_unique_transaction_id
 
 # Need Python 3 for super() syntax
@@ -65,10 +65,9 @@ class Parser(parser.StatementParser):
             stmt.bank_id = self.bank_id
             stmt.account_id = self.account_id
 
-            # for stmt.start_date
-            recalculate_balance(stmt)
+            stmt.start_date = min(sl.date for sl in stmt.lines)
             stmt.start_balance = self.start_balance
-            stmt.end_date = self.page_date
+            stmt.end_date = self.page_date  # is exclusive in ICSCards
             stmt.end_balance = self.end_balance
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
@@ -231,9 +230,11 @@ class Parser(parser.StatementParser):
                                       memo=memo,
                                       amount=amount)
             stmt_line.payee = payee
-            stmt_line.id, counter = \
+            stmt_line.id = \
                 generate_unique_transaction_id(stmt_line, self.unique_id_set)
-            if counter != 0:
+            m = re.search(r'-(\d+)$', stmt_line.id)
+            if m:
+                counter = int(m.group(1))
                 # include counter so the memo gets unique
                 stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
 
