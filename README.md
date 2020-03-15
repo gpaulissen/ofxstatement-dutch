@@ -11,15 +11,28 @@ format, suitable for importing into programs like GnuCash or Beancount. The
 plugin for ofxstatement parses the bank statement and produces a common data
 structure, that is then formatted into an OFX file.
 
-Users of ofxstatement have developed several plugins for their banks. They are
-listed on the main [`ofxstatement`](https://github.com/kedder/ofxstatement)
-site. If your bank is missing, you can develop your own plugin.
-
 ## Installation
 
+### Using pip
+
+```
+$ pip install ofxstatement-dutch
+```
+
 ### Development version from source
+
 ```
 $ git clone https://github.com/gpaulissen/ofxstatement-dutch.git
+$ pip install -e .
+```
+
+### Troubleshooting
+
+This package depends on ofxstatement with a version at least 0.6.5. This
+version may not yet be available in PyPI so install that from source like
+this:
+```
+$ git clone https://github.com/kedder/ofxstatement.git
 $ pip install -e .
 ```
 
@@ -32,10 +45,38 @@ $ py.test
 ```
 
 ## Usage
+
+### Show installed plugins
+
+This shows the all installed plugins, not only those from this package:
+
+```
+$ ofxstatement list-plugins
+```
+
+You should see at least:
+
+```
+The following plugins are available:
+
+  ...
+  nl-icscards      ICSCards, The Netherlands, PDF (https://icscards.nl/)
+  nl-ing           ING Bank, The Netherlands, CSV (https://www.ing.nl/)
+  ...
+
+```
+
+### Convert
+
+Use something like this:
+
 ```
 $ ofxstatement convert -t nl-ing ING.csv output.ofx
+```
 
-or
+or this:
+
+```
 
 $ ofxstatement convert -t nl-icscards ICSCards.pdf output.ofx
 ```
