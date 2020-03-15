@@ -11,7 +11,15 @@ format, suitable for importing into programs like GnuCash or Beancount. The
 plugin for ofxstatement parses the bank statement and produces a common data
 structure, that is then formatted into an OFX file.
 
+The PDF is converted using the
+[pdftotext](https://pypi.org/project/pdftotext/) utility.
+
 ## Installation
+
+### Preconditions
+
+You have to install the poppler library first, see
+[pdftotext](https://pypi.org/project/pdftotext/)
 
 ### Using pip
 
@@ -68,15 +76,25 @@ The following plugins are available:
 
 ### Convert
 
+#### ICSCards
+
+Use something like this:
+```
+$ ofxstatement convert -t nl-icscards <file>.pdf <file>.ofx
+```
+
+Or you can convert the PDF yourself and supply the text as input:
+
+```
+$ pdftotext -layout <file>.pdf <file>.txt
+$ ofxstatement convert -t nl-icscards <file>.txt <file>.ofx
+```
+
+#### ING bank
+
 Use something like this:
 
 ```
-$ ofxstatement convert -t nl-ing ING.csv output.ofx
+$ ofxstatement convert -t nl-ing <file>.csv <file>.ofx
 ```
 
-or this:
-
-```
-
-$ ofxstatement convert -t nl-icscards ICSCards.pdf output.ofx
-```
