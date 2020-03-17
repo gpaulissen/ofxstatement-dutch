@@ -3,6 +3,7 @@
 This project provides custom
 [ofxstatement](https://github.com/kedder/ofxstatement) plugins for these dutch
 financial institutions:
+- deGiro platform, The Netherlands, CSV (https://www.degiro.nl/)
 - ICSCards, The Netherlands, PDF (https://icscards.nl/)
 - ING bank, The Netherlands, CSV (https://www.ing.nl/)
 
@@ -68,6 +69,7 @@ You should see at least:
 The following plugins are available:
 
   ...
+  nl-degiro        deGiro platform, The Netherlands, CSV (https://www.degiro.nl/)
   nl-icscards      ICSCards, The Netherlands, PDF (https://icscards.nl/)
   nl-ing           ING Bank, The Netherlands, CSV (https://www.ing.nl/)
   ...
@@ -75,6 +77,14 @@ The following plugins are available:
 ```
 
 ### Convert
+
+#### deGiro platform
+
+Use something like this:
+
+```
+$ ofxstatement convert -t nl-degiro <file>.csv <file>.ofx
+```
 
 #### ICSCards
 

@@ -32,7 +32,7 @@ class ParserTest(TestCase):
         statement = parser.parse()
 
         self.assertEqual(statement.currency, 'EUR')
-        self.assertEqual(statement.bank_id, "INGBNL2AXXX")
+        self.assertEqual(statement.bank_id, "INGBNL2A")
         self.assertEqual(statement.account_id, "NL99INGB9999999999")
         self.assertEqual(statement.account_type, "CHECKING")
 

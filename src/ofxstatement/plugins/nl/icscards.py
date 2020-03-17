@@ -105,8 +105,6 @@ class Parser(parser.StatementParser):
         def convert_str_to_list(str, max_items=None, sep=r'\s\s+|\t|\n'):
             return [x for x in re.split(sep, str)[0:max_items]]
 
-        global logger
-
         first_line = True
         first_line_row = ['International Card Services BV', 'www.icscards.nl']
 
@@ -124,7 +122,7 @@ class Parser(parser.StatementParser):
         for line in self.fin:
             line = line.strip()
 
-            logger.debug('line: ' + line)
+            logger.debug('line: %s', line)
 
             # to ease the parsing pain
             row = convert_str_to_list(line)
@@ -200,9 +198,7 @@ class Parser(parser.StatementParser):
                 d = add_years(d, 1)
             return add_years(d, -1)
 
-        global logger
-
-        logger.debug('row: ' + str(row))
+        logger.debug('row: %s', str(row))
         assert(len(row) in [5, 7, 8])
 
         stmt_line = None

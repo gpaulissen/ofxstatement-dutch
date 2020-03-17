@@ -24,7 +24,7 @@ class Plugin(plugin.Plugin):
 class Parser(parser.CsvStatementParser):
     """
 
-    These are the first two lines of an ING Netherlands CVS file:
+    These are the first two lines of an ING Netherlands CSV file:
 
     "Datum","Naam / Omschrijving","Rekening","Tegenrekening","Code",\
 "Af Bij","Bedrag (EUR)","MutatieSoort",\
@@ -104,7 +104,7 @@ class Parser(parser.CsvStatementParser):
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement.bank_id = "INGBNL2AXXX"
+        self.statement.bank_id = "INGBNL2A"
         self.statement.currency = "EUR"
         self.unique_id_set = set()
 
