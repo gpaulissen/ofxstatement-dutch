@@ -12,6 +12,8 @@ from ofxstatement import plugin, parser
 from ofxstatement.statement import StatementLine
 from ofxstatement.statement import generate_unique_transaction_id
 
+from ofxstatement.plugins.nl.statement import Statement
+
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
 
@@ -43,6 +45,9 @@ class Plugin(plugin.Plugin):
 class Parser(parser.StatementParser):
     def __init__(self, fin):
         super().__init__()
+        self.statement = Statement(bank_id=None,
+                                   account_id=None,
+                                   currency='EUR')  # My Statement
         self.fin = fin
         self.unique_id_set = set()
 
@@ -61,14 +66,8 @@ class Parser(parser.StatementParser):
             # Python 3 needed
             stmt = super().parse()
 
-            stmt.currency = 'EUR'
-            stmt.bank_id = self.bank_id
-            stmt.account_id = self.account_id
-
-            stmt.start_date = min(sl.date for sl in stmt.lines)
-            stmt.start_balance = self.start_balance
-            stmt.end_date = self.page_date  # is exclusive in ICSCards
-            stmt.end_balance = self.end_balance
+            if stmt.lines:
+                stmt.start_date = min(sl.date for sl in stmt.lines)
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
 
@@ -118,7 +117,6 @@ class Parser(parser.StatementParser):
         statement_expr = \
             re.compile(r'^\d\d [a-z]{3}\s+\d\d [a-z]{3}.+[0-9,.]+\s+(Af|Bij)$')
 
-        # breakpoint()
         for line in self.fin:
             line = line.strip()
 
@@ -133,23 +131,26 @@ class Parser(parser.StatementParser):
                 first_line = False
 
             if len(row) == 2 and row[1][0:5] == 'BIC: ':
-                self.bank_id = row[1][5:]
+                self.statement.bank_id = row[1][5:]
 
             elif row == new_page_row:
                 new_page = True
             elif new_page:
                 new_page = False
-                self.page_date = row[0]
-                self.account_id = row[1]
-                self.page_date = \
-                    datetime.strptime(self.page_date, '%d %B %Y').date()
+                self.statement.end_date = row[0]  # exclusive in ICSCards
+                self.statement.end_date = \
+                    datetime.strptime(self.statement.end_date,
+                                      '%d %B %Y').date()
+                self.statement.account_id = row[1]
 
             elif row == balance_row:
                 balance = True
             elif balance:
                 balance = False
-                self.start_balance = Parser.get_amount(row[0], row[1])
-                self.end_balance = Parser.get_amount(row[-2], row[-1])
+                self.statement.start_balance = Parser.get_amount(row[0],
+                                                                 row[1])
+                self.statement.end_balance = Parser.get_amount(row[-2],
+                                                               row[-1])
 
             elif re.search(statement_expr, line):
                 # payee (column 2), place and contry may be something like:
@@ -194,7 +195,7 @@ class Parser(parser.StatementParser):
         def get_date(s: str):
             d = datetime.strptime(s, '%d %b').date()
             # Without a year it will be 1900 so augment
-            while d <= self.page_date:
+            while d <= self.statement.end_date:
                 d = add_years(d, 1)
             return add_years(d, -1)
 

@@ -8,6 +8,8 @@ import logging
 from ofxstatement import plugin, parser
 from ofxstatement.statement import generate_unique_transaction_id
 
+from ofxstatement.plugins.nl.statement import Statement
+
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
 
@@ -16,11 +18,23 @@ logger.addHandler(logging.NullHandler())
 
 
 class Plugin(plugin.Plugin):
-    """deGiro platform, The Netherlands, CSV (https://www.degiro.nl/)
+    """DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
     """
     def get_parser(self, f):
         fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
-        return Parser(fin, self.settings['account_id'])
+        try:
+            account_id = self.settings['account_id']
+        except Exception:
+            raise RuntimeError("""
+Please define an 'account_id' in the ofxstatement configuration.
+
+Run
+
+$ ofxstatement edit-config
+
+for more information.
+""")
+        return Parser(fin, account_id)
 
 
 class Parser(parser.CsvStatementParser):
@@ -106,10 +120,13 @@ EUR,"13,87",
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement.bank_id = "STDGNL21"
-        self.statement.currency = "EUR"
+        self.statement = Statement(bank_id="STDGNL21",
+                                   account_id=account_id,
+                                   currency="EUR",
+                                   # Not yet, just a CHECKING account
+                                   # self.statement.account_type = "MONEYMRKT"
+                                   account_type="CHECKING")  # My Statement
         self.unique_id_set = set()
-        self.account_id = account_id
 
     def parse(self):
         """Main entry point for parsers
@@ -120,9 +137,6 @@ EUR,"13,87",
 
         # Python 3 needed
         stmt = super().parse()
-
-        stmt.account_id = self.account_id
-        stmt.account_type = "MONEYMRKT"
 
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
@@ -165,16 +179,6 @@ EUR,"13,87",
         if line[self.mappings['amount'] - 1] != 'EUR':
             return None
 
-        # Determine some fields not in the self.mappings
-
-        stmt_line.id = \
-            generate_unique_transaction_id(stmt_line, self.unique_id_set)
-        m = re.search(r'-(\d+)$', stmt_line.id)
-        if m:
-            counter = int(m.group(1))
-            # include counter so the memo gets unique
-            stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
-
         if stmt_line.memo in ['Dividend', 'Dividendbelasting']:
             stmt_line.trntype = "DIV"
         elif stmt_line.memo == 'Rente':
@@ -187,20 +191,33 @@ EUR,"13,87",
             stmt_line.trntype = "XFER"
         elif stmt_line.memo in ['Storting', 'iDEAL storting']:
             stmt_line.trntype = "DEP"
-        elif stmt_line.amount < 0:
+        elif stmt_line.amount < 0:  # pragma: no cover
             stmt_line.trntype = "DEBIT"
         else:
             stmt_line.trntype = "CREDIT"
 
+        if stmt_line.trntype not in ["XFER", "DEP"]:
+            return None
+
+        # Determine some fields not in the self.mappings
+
+        stmt_line.id = \
+            generate_unique_transaction_id(stmt_line, self.unique_id_set)
+        m = re.search(r'-(\d+)$', stmt_line.id)
+        if m:
+            counter = int(m.group(1))
+            # include counter so the memo gets unique
+            stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
+
         # Product known?
-        if line[self.mappings['memo'] - 2]:
+        if line[self.mappings['memo'] - 2]:  # pragma: no cover
             stmt_line.memo += ' ' + line[self.mappings['memo'] - 2]
             # ISIN known?
             if line[self.mappings['memo'] - 1]:
                 stmt_line.memo +=\
                     ' (' + line[self.mappings['memo'] - 1] + ')'
 
-        return stmt_line if stmt_line.trntype in ["XFER", "DEP"] else None
+        return stmt_line
 
     def parse_decimal(self, value):
         logger.debug('value: %s', value)

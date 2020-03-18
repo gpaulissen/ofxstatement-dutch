@@ -3,7 +3,7 @@
 This project provides custom
 [ofxstatement](https://github.com/kedder/ofxstatement) plugins for these dutch
 financial institutions:
-- deGiro platform, The Netherlands, CSV (https://www.degiro.nl/)
+- DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
 - ICSCards, The Netherlands, PDF (https://icscards.nl/)
 - ING bank, The Netherlands, CSV (https://www.ing.nl/)
 
@@ -47,10 +47,16 @@ $ pip install -e .
 
 ## Test
 
-To run the tests you can use the py.test command:
+To run the tests from the development version you can use the py.test command:
 
 ```
 $ py.test
+```
+
+You may need to install the required test packages first:
+
+```
+$ pip install -r test_requirements.txt
 ```
 
 ## Usage
@@ -69,7 +75,7 @@ You should see at least:
 The following plugins are available:
 
   ...
-  nl-degiro        deGiro platform, The Netherlands, CSV (https://www.degiro.nl/)
+  nl-degiro        DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
   nl-icscards      ICSCards, The Netherlands, PDF (https://icscards.nl/)
   nl-ing           ING Bank, The Netherlands, CSV (https://www.ing.nl/)
   ...
@@ -78,12 +84,23 @@ The following plugins are available:
 
 ### Convert
 
-#### deGiro platform
+#### DEGIRO trader platform
+
+The DEGIRO files do not only contain money statements but also the whole
+security transaction history. This tool just emits the money statements coming
+from or going to your associated (other) bank account. To be more specific the
+deposits (description like "Storting" or "iDEAL storting") and transfers
+("Terugstorting"). Maybe in the future the security transaction will be
+emitted too, but currently
+[ofxstatement](https://github.com/kedder/ofxstatement) only processes money
+information.
+
+See also the section configuration below.
 
 Use something like this:
 
 ```
-$ ofxstatement convert -t nl-degiro <file>.csv <file>.ofx
+$ ofxstatement convert -t <configuration name> <file>.csv <file>.ofx
 ```
 
 #### ICSCards
@@ -106,5 +123,27 @@ Use something like this:
 
 ```
 $ ofxstatement convert -t nl-ing <file>.csv <file>.ofx
+```
+
+### Configuration
+
+For DEGIRO you need to set an account id, since the statement files does not
+contain account information.
+
+```
+$ ofxstatement edit-config
+```
+
+This is a sample configuration (do not forget to specify the plugin for each section):
+
+```
+[degiro:account1]
+plugin = nl-degiro
+account_id = account1
+
+[degiro:account2]
+plugin = nl-degiro
+account_id = account2
+
 ```
 

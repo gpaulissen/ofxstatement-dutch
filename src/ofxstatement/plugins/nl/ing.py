@@ -9,6 +9,8 @@ from ofxstatement.exceptions import ParseError
 from ofxstatement.statement import BankAccount
 from ofxstatement.statement import generate_unique_transaction_id
 
+from ofxstatement.plugins.nl.statement import Statement
+
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
 
@@ -104,8 +106,9 @@ class Parser(parser.CsvStatementParser):
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement.bank_id = "INGBNL2A"
-        self.statement.currency = "EUR"
+        self.statement = Statement(bank_id="INGBNL2A",
+                                   account_id=None,
+                                   currency="EUR")  # My Statement
         self.unique_id_set = set()
 
     def parse(self):

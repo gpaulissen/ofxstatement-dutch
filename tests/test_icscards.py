@@ -191,3 +191,5 @@ transactie   boeking                                                            
 
         # And parse:
         parser.parse()
+        if parser.bank_id:
+            pass
