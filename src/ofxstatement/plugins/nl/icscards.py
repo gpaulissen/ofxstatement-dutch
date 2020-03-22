@@ -192,12 +192,16 @@ class Parser(parser.StatementParser):
                 if d.month == 2 and d.day == 29 \
                 else d.replace(year=d.year + years)
 
-        def get_date(s: str):
-            d = datetime.strptime(s, '%d %b').date()
-            # Without a year it will be 1900 so augment
-            while d <= self.statement.end_date:
-                d = add_years(d, 1)
-            return add_years(d, -1)
+        def get_date(d_m: str):
+            # Without a year it will be 1900 so add the year
+            d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
+            d = datetime.strptime(d_m_y, '%d %b %Y').date()
+            # But now the resulting date may be more than the end date
+            # (d_m in december and end date in january)
+            if d > self.statement.end_date:
+                d = add_years(d, -1)
+            assert d <= self.statement.end_date
+            return d
 
         logger.debug('row: %s', str(row))
         assert(len(row) in [5, 7, 8])
