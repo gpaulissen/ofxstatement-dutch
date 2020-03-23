@@ -183,9 +183,11 @@ this line's account: {}".format(self.statement.account_id, line[2])
 
             stmt_line.id = \
                 generate_unique_transaction_id(stmt_line, self.unique_id_set)
-            m = re.search(r'-(\d+)$', stmt_line.id)
-            if m:
-                counter = int(m.group(1))
+            m = re.match(r'([0-9a-f]+)(-\d+)?$', stmt_line.id)
+            assert m, "Id should match hexadecimal digits, \
+optionally followed by a minus and a counter: '{}'".format(stmt_line.id)
+            if m.group(2):
+                counter = int(m.group(2)[1:])
                 # include counter so the memo gets unique
                 stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
 

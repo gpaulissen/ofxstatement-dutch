@@ -10,3 +10,6 @@ __version__ = '1.1.0'
 __license__ = "GPLv3"
 __copyright__ = 'Copyright 2020 Gert-Jan Paulissen'
 __url__ = "https://github.com/gpaulissen/ofxstatement-dutch"
+
+if __name__ == '__main__':
+    print(__version__)
