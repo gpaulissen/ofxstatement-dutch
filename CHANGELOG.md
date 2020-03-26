@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-	- Added DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/).
+	- Added converter for:
+		* DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/).
 	- Added reference to the Changelog in the Readme.
 	- The Readme mentions test_requirements.txt for installing test modules.
 	- More checks concerning the content (dates with start and end
@@ -30,19 +31,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	- MANIFEST.in now includes the Makefile and CHANGELOG.md.
 	- Code refactoring.
 	- Changed bank id (BIC) for ING from INGBNL2AXXX to INGBNL2A.
-
-## [1.0.1] - 2020-03-16
-
-### Added
-
 	- Added poppler library to the instructions.
-
-### Changed
-
 	- Readme enhanced.
 
 ## [1.0.0] - 2020-03-15
 
 ### Added
 
-	- Converting the French BanquePopulaire PDFs to an OFX file.
+	- First version to convert:
+		* ICSCards, The Netherlands, PDF (https://icscards.nl/)
+		* ING bank, The Netherlands, CSV (https://www.ing.nl/)
+
