@@ -31,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 	- MANIFEST.in now includes the Makefile and CHANGELOG.md.
 	- Code refactoring.
 	- Changed bank id (BIC) for ING from INGBNL2AXXX to INGBNL2A.
+
+## [1.0.1] - 2020-03-16
+
+### Changed
+
 	- Added poppler library to the instructions.
 	- Readme enhanced.
 
