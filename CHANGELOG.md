@@ -7,22 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.1.0] - 2020-03-24
+## [1.1.0] - 2020-03-26
 
-	- The Readme mentions test_requirements.txt for installing test modules
+### Added
+
+	- Added DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/).
+	- Added reference to the Changelog in the Readme.
+	- The Readme mentions test_requirements.txt for installing test modules.
 	- More checks concerning the content (dates with start and end
-	date exclusive) that may result in a ValidationError exception
-	- Added Makefile for keeping the important operations together
+	date exclusive) that may result in a ValidationError exception.
+	- Added Makefile for keeping the important operations together.
 
 ### Changed
 
 	- The generation af a unique OFX id did only return a counter in
-	case of duplicates
+	case of duplicates.
 	- The Readme mentions now my fork of the ofxstatement instead of
-	https://github.com/kedder/ofxstatement.git
+	https://github.com/kedder/ofxstatement.git.
 	- The __about__.py file outputs the version number and that is
-	used in the Makefile
-	- The Makefile depends now on GNU make for tagging a release
+	used in the Makefile.
+	- The Makefile depends now on GNU make for tagging a release.
+	- MANIFEST.in now includes the Makefile and CHANGELOG.md.
+	- Code refactoring.
+	- Changed bank id (BIC) for ING from INGBNL2AXXX to INGBNL2A.
 
 ## [1.0.1] - 2020-03-16
 
@@ -32,14 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-	- The date will now be the accounting date (DATE COMPTA) instead of operation date (DATE OPERATION).
-	- Handling of 29 february improved
-	- Improved handling of graphics in the PDF which transforms to a
-	description starting with F and whitespace.
-	- The BIC is also recognized if the line does not end with a BIC
-	followed by only whitespace (hence BIC<ws><number><ws><.+> is now
-	allowed)
-	- Better determination of the statement header.
+	- Readme enhanced.
 
 ## [1.0.0] - 2020-03-15
 

@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
 import csv
 import sys
-import re
 import datetime
 import logging
 
 from ofxstatement import plugin, parser
-from ofxstatement.statement import generate_unique_transaction_id
 
-from ofxstatement.plugins.nl.statement import Statement
+from ofxstatement.plugins.nl.statement import Statement, StatementLine
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -200,16 +198,9 @@ EUR,"13,87",
             return None
 
         # Determine some fields not in the self.mappings
-
-        stmt_line.id = \
-            generate_unique_transaction_id(stmt_line, self.unique_id_set)
-        m = re.match(r'([0-9a-f]+)(-\d+)?$', stmt_line.id)
-        assert m, "Id should match hexadecimal digits, \
-optionally followed by a minus and a counter: '{}'".format(stmt_line.id)
-        if m.group(2):
-            counter = int(m.group(2)[1:])
-            # include counter so the memo gets unique
-            stmt_line.memo = stmt_line.memo + ' #' + str(counter + 1)
+        # A hack but needed to use the adjust method
+        stmt_line.__class__ = StatementLine
+        stmt_line.adjust(self.unique_id_set)
 
         # Product known?
         if line[self.mappings['memo'] - 2]:  # pragma: no cover

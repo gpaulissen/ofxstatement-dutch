@@ -41,7 +41,7 @@ This package depends on ofxstatement with a version at least 0.6.5. This
 version may not yet be available in PyPI so install that from source like
 this:
 ```
-$ git clone https://github.com/kedder/ofxstatement.git
+$ git clone https://github.com/gpaulissen/ofxstatement.git
 $ pip install -e .
 ```
 
@@ -147,3 +147,6 @@ account_id = account2
 
 ```
 
+## Change history
+
+See the Changelog (CHANGELOG.md).
