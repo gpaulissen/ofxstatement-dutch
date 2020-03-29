@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2020-03-30
+
+### Added
+
+	- Added converter for:
+		* KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/).
+
 ## [1.1.0] - 2020-03-26
 
 ### Added

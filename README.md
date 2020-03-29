@@ -6,6 +6,7 @@ financial institutions:
 - DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
 - ICSCards, The Netherlands, PDF (https://icscards.nl/)
 - ING bank, The Netherlands, CSV (https://www.ing.nl/)
+- KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)
 
 `ofxstatement` is a tool to convert a proprietary bank statement to OFX
 format, suitable for importing into programs like GnuCash or Beancount. The
@@ -78,6 +79,7 @@ The following plugins are available:
   nl-degiro        DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
   nl-icscards      ICSCards, The Netherlands, PDF (https://icscards.nl/)
   nl-ing           ING Bank, The Netherlands, CSV (https://www.ing.nl/)
+  nl-knab          KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)
   ...
 
 ```
@@ -123,6 +125,14 @@ Use something like this:
 
 ```
 $ ofxstatement convert -t nl-ing <file>.csv <file>.ofx
+```
+
+#### KNAB Online Bank
+
+Use something like this:
+
+```
+$ ofxstatement convert -t nl-knab <file>.csv <file>.ofx
 ```
 
 ### Configuration
