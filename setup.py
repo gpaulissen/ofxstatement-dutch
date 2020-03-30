@@ -64,7 +64,7 @@ if __name__ == '__main__':
         url=about['__url__'],
         license=about['__license__'],
         keywords=["ofx", "banking", "statement", "beancount",
-                  "degiro", "ing", "icscards"],
+                  "degiro", "ing", "icscards", "knab"],
         packages=find_packages('src'),
         package_dir={'': 'src'},
         namespace_packages=["ofxstatement", "ofxstatement.plugins"],
@@ -93,6 +93,7 @@ if __name__ == '__main__':
             'ofxstatement':
             ['nl-degiro = ofxstatement.plugins.nl.degiro:Plugin',
              'nl-icscards = ofxstatement.plugins.nl.icscards:Plugin',
-             'nl-ing = ofxstatement.plugins.nl.ing:Plugin']
+             'nl-ing = ofxstatement.plugins.nl.ing:Plugin',
+             'nl-knab = ofxstatement.plugins.nl.knab:Plugin']
         },
     )

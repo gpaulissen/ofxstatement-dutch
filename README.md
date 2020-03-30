@@ -20,8 +20,8 @@ The PDF is converted using the
 
 ### Preconditions
 
-You have to install the poppler library first, see
-[pdftotext](https://pypi.org/project/pdftotext/)
+For converting PDFs you have to install the poppler library first, see
+[pdftotext](https://pypi.org/project/pdftotext/).
 
 ### Using pip
 
@@ -137,7 +137,7 @@ $ ofxstatement convert -t nl-knab <file>.csv <file>.ofx
 
 ### Configuration
 
-For DEGIRO you need to set an account id, since the statement files does not
+For DEGIRO you need to set an account id, since the statement files do not
 contain account information.
 
 ```

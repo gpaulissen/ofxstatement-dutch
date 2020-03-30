@@ -184,15 +184,14 @@ Boekdatum;
                          self.cur_record,
                          line)
 
-            # First two records must be the header
+            # First record(s) must be the header
             if len(self.header) >= 1:
-                hdr = self.header[0]
+                # Remove it since it need not be checked anymore
+                hdr = self.header.pop(0)
                 line = list(filter(None, line))
                 logger.debug('header: %s', hdr)
                 assert line == hdr,\
                     "Expected: {}\ngot: {}".format(hdr, line)
-                # Remove it since it is checked
-                self.header.pop(0)
                 return None
 
             # line[self.ACCOUNT] contains the account number
@@ -212,15 +211,11 @@ this line's account: {}".format(self.statement.account_id,
                 line[self.mappings['amount']] =\
                     '-' + line[self.mappings['amount']]
 
-            if line[self.mappings['bank_account_to']]:
-                line[self.mappings['payee']] =\
-                    "{} ({})".format(line[self.mappings['payee']],
-                                     line[self.mappings['bank_account_to']])
-            else:
-                line[self.mappings['memo']] =\
-                    "{}, {}".format(line[self.mappings['payee']],
-                                    line[self.mappings['memo']])
-                line[self.mappings['payee']] = None
+            assert line[self.mappings['bank_account_to']]
+
+            line[self.mappings['payee']] =\
+                "{} ({})".format(line[self.mappings['payee']],
+                                 line[self.mappings['bank_account_to']])
 
             # Python 3 needed
             stmt_line = super().parse_record(line)

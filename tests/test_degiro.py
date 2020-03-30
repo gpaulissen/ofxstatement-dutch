@@ -5,6 +5,7 @@ from decimal import Decimal
 from datetime import datetime
 
 from ofxstatement.statement import StatementLine
+from ofxstatement.exceptions import ParseError
 from ofxstatement.plugins.nl.degiro import Plugin
 
 
@@ -89,3 +90,12 @@ class ParserTest(TestCase):
         here = os.path.dirname(__file__)
         text_filename = os.path.join(here, 'samples', 'Account_20190101_20200317.csv')
         Plugin(None, {'ACCOUNT_ID'}).get_parser(text_filename)
+
+    @pytest.mark.xfail(raises=ParseError)
+    def test_no_header(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'empty.csv')
+        parser = Plugin(None, {'account_id': 'ABC'}).get_parser(text_filename)
+
+        # And parse csv:
+        parser.parse()

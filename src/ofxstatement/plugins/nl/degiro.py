@@ -5,7 +5,7 @@ import datetime
 import logging
 
 from ofxstatement import plugin, parser
-
+from ofxstatement.exceptions import ParseError
 from ofxstatement.plugins.nl.statement import Statement, StatementLine
 
 # Need Python 3 for super() syntax
@@ -125,6 +125,18 @@ EUR,"13,87",
                                    # self.statement.account_type = "MONEYMRKT"
                                    account_type="CHECKING")  # My Statement
         self.unique_id_set = set()
+        self.header = [["Datum",
+                        "Tijd",
+                        "Valutadatum",
+                        "Product",
+                        "ISIN",
+                        "Omschrijving",
+                        "FX",
+                        "Mutatie",
+                        "",
+                        "Saldo",
+                        "",
+                        "Order Id"]]
 
     def parse(self):
         """Main entry point for parsers
@@ -135,6 +147,12 @@ EUR,"13,87",
 
         # Python 3 needed
         stmt = super().parse()
+
+        try:
+            assert len(self.header) == 0,\
+                "Header not completely read: {}".format(str(self.header))
+        except Exception as e:
+            raise ParseError(0, str(e))
 
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
@@ -158,12 +176,18 @@ EUR,"13,87",
         """Parse given transaction line and return StatementLine object
         """
 
-        logger.debug('line: %r', str(line))
+        logger.debug('header count: %d; line #%d: %s',
+                     len(self.header),
+                     self.cur_record,
+                     line)
 
-        # Skip header
-        if line == ["Datum", "Tijd", "Valutadatum", "Product", "ISIN",
-                    "Omschrijving", "FX", "Mutatie", "", "Saldo", "",
-                    "Order Id"]:
+        # First record(s) must be the header
+        if len(self.header) >= 1:
+            # Remove it since it need not be checked anymore
+            hdr = self.header.pop(0)
+            logger.debug('header: %s', hdr)
+            assert line == hdr,\
+                "Expected: {}\ngot: {}".format(hdr, line)
             return None
 
         # Python 3 needed

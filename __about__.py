@@ -2,8 +2,8 @@ __title__ = 'ofxstatement plugin for dutch financial institutions'
 __package_name__ = 'ofxstatement-dutch'
 __author__ = "Gert-Jan Paulissen"
 __description__ = ' '.join('''
-OFXStatement plugin for dutch financial institutions like DEGIRO, ING and
-ICSCards.
+OFXStatement plugin for dutch financial institutions like DEGIRO, ICSCards,
+ING and KNAB.
 '''.strip().split())
 __email__ = "gert.jan.paulissen@gmail.com"
 __version__ = '1.2.0'

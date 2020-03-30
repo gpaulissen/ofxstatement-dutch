@@ -2,6 +2,7 @@
 import csv
 import sys
 import datetime
+import logging
 
 from ofxstatement import plugin, parser
 from ofxstatement.exceptions import ParseError
@@ -11,6 +12,9 @@ from ofxstatement.plugins.nl.statement import Statement, StatementLine
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class Plugin(plugin.Plugin):
@@ -108,6 +112,15 @@ class Parser(parser.CsvStatementParser):
                                    account_id=None,
                                    currency="EUR")  # My Statement
         self.unique_id_set = set()
+        self.header = [["Datum",
+                        "Naam / Omschrijving",
+                        "Rekening",
+                        "Tegenrekening",
+                        "Code",
+                        "Af Bij",
+                        "Bedrag (EUR)",
+                        "MutatieSoort",
+                        "Mededelingen"]]
 
     def parse(self):
         """Main entry point for parsers
@@ -118,6 +131,12 @@ class Parser(parser.CsvStatementParser):
 
         # Python 3 needed
         stmt = super().parse()
+
+        try:
+            assert len(self.header) == 0,\
+                "Header not completely read: {}".format(str(self.header))
+        except Exception as e:
+            raise ParseError(0, str(e))
 
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
@@ -140,10 +159,18 @@ class Parser(parser.CsvStatementParser):
         """
 
         try:
-            # Skip header
-            if line == ["Datum", "Naam / Omschrijving", "Rekening",
-                        "Tegenrekening", "Code", "Af Bij", "Bedrag (EUR)",
-                        "MutatieSoort", "Mededelingen"]:
+            logger.debug('header count: %d; line #%d: %s',
+                         len(self.header),
+                         self.cur_record,
+                         line)
+
+            # First record(s) must be the header
+            if len(self.header) >= 1:
+                # Remove it since it need not be checked anymore
+                hdr = self.header.pop(0)
+                logger.debug('header: %s', hdr)
+                assert line == hdr,\
+                    "Expected: {}\ngot: {}".format(hdr, line)
                 return None
 
             # line[2] contains the account number

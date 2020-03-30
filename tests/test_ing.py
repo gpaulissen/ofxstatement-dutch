@@ -1,4 +1,5 @@
 import io
+import os
 from textwrap import dedent
 from unittest import TestCase
 from decimal import Decimal
@@ -83,6 +84,15 @@ class ParserTest(TestCase):
 
         # Create and configure csv parser:
         parser = Plugin(None, None).get_parser(f)
+
+        # And parse csv:
+        parser.parse()
+
+    @pytest.mark.xfail(raises=ParseError)
+    def test_no_header(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'empty.csv')
+        parser = Plugin(None, None).get_parser(text_filename)
 
         # And parse csv:
         parser.parse()
