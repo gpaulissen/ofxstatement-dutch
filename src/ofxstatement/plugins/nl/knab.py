@@ -211,11 +211,10 @@ this line's account: {}".format(self.statement.account_id,
                 line[self.mappings['amount']] =\
                     '-' + line[self.mappings['amount']]
 
-            assert line[self.mappings['bank_account_to']]
-
-            line[self.mappings['payee']] =\
-                "{} ({})".format(line[self.mappings['payee']],
-                                 line[self.mappings['bank_account_to']])
+            if line[self.mappings['bank_account_to']]:
+                line[self.mappings['payee']] =\
+                    "{} ({})".format(line[self.mappings['payee']],
+                                     line[self.mappings['bank_account_to']])
 
             # Python 3 needed
             stmt_line = super().parse_record(line)

@@ -27,3 +27,4 @@ Rekeningnummer;Transactiedatum;Valutacode;CreditDebet;Bedrag;Tegenrekeningnummer
 "NL99KNAB9999999999";"07-01-2019";"EUR";"D";"0,01";"99999999";"G. Janssen";"07-01-2019";"Overboeking";"";"";"";"";"";"B9A07PGYUH3GKGXD";"07-01-2019";
 "NL99KNAB9999999999";"07-01-2019";"EUR";"D";"1000";"NL99ASNB9999999999";"JANSSEN G J L M";"08-01-2019";"Overboeking";"";"";"";"";"";"B9A07PGYT18GKBX6";"07-01-2019";
 "NL99KNAB9999999999";"07-01-2019";"EUR";"C";"1000";"99999999";"Gert Janssen";"07-01-2019";"Ontvangen betaling";"Zwembad";"";"";"";"";"B9A07PGYRI1GK7TE";"07-01-2019";
+"NL99KNAB9999999999";"07-01-2019";"EUR";"C";"7,02";"";"Knab";"07-01-2019";"Rente";"Rente";"";"";"";"";"B9F28INNFQ2MUC3X";"07-01-2019";

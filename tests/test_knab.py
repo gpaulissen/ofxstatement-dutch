@@ -65,7 +65,7 @@ Rekeningnummer;Transactiedatum;Valutacode;CreditDebet;Bedrag;Tegenrekeningnummer
 
         # And parse:
         statement = parser.parse()
-        self.assertEqual(len(statement.lines), 27)
+        self.assertEqual(len(statement.lines), 28)
         self.assertEqual(statement.currency, 'EUR')
         self.assertEqual(statement.bank_id, "KNABNL2H")
         self.assertEqual(statement.account_id, "NL99KNAB9999999999")
@@ -77,7 +77,7 @@ Rekeningnummer;Transactiedatum;Valutacode;CreditDebet;Bedrag;Tegenrekeningnummer
         self.assertIsNone(statement.end_balance)
         self.assertEqual(statement.end_date, datetime.strptime("22-06-2019", parser.date_format))
 
-        self.assertEqual(sum(sl.amount for sl in statement.lines), Decimal('-0.01'))
+        self.assertEqual(sum(sl.amount for sl in statement.lines), Decimal('7.01'))
 
     @pytest.mark.xfail(raises=ParseError)
     def test_no_header1(self):
