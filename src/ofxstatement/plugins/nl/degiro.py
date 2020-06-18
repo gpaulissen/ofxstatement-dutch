@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+from typing import Iterable, Set, Optional, List, Any
 import csv
 import sys
 import datetime
 import logging
+from decimal import Decimal
 
-from ofxstatement import plugin, parser
+from ofxstatement.plugin import Plugin as BasePlugin
+from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
 from ofxstatement.plugins.nl.statement import Statement, StatementLine
 
@@ -15,27 +18,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Plugin(plugin.Plugin):
-    """DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
-    """
-    def get_parser(self, f):
-        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
-        try:
-            account_id = self.settings['account_id']
-        except Exception:
-            raise RuntimeError("""
-Please define an 'account_id' in the ofxstatement configuration.
-
-Run
-
-$ ofxstatement edit-config
-
-for more information.
-""")
-        return Parser(fin, account_id)
-
-
-class Parser(parser.CsvStatementParser):
+class Parser(CsvStatementParser):
     """
 
     These are the first two lines of a DEGIRO CSV file:
@@ -114,7 +97,9 @@ EUR,"13,87",
         # bank_account_to
     }
 
-    def __init__(self, fin, account_id):
+    unique_id_set: Set[str]
+
+    def __init__(self, fin: Iterable[str], account_id: str) -> None:
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
@@ -138,7 +123,7 @@ EUR,"13,87",
                         "",
                         "Order Id"]]
 
-    def parse(self):
+    def parse(self) -> Statement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -146,7 +131,7 @@ EUR,"13,87",
         """
 
         # Python 3 needed
-        stmt = super().parse()
+        stmt: Statement = super().parse()
 
         try:
             assert len(self.header) == 0,\
@@ -167,12 +152,12 @@ EUR,"13,87",
 
         return stmt
 
-    def split_records(self):
+    def split_records(self) -> Iterable[Any]:
         """Return iterable object consisting of a line per transaction
         """
         return csv.reader(self.fin, delimiter=',')
 
-    def parse_record(self, line):
+    def parse_record(self, line: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object
         """
 
@@ -191,7 +176,7 @@ EUR,"13,87",
             return None
 
         # Python 3 needed
-        stmt_line = super().parse_record(line)
+        stmt_line: StatementLine = super().parse_record(line)
 
         # Remove zero-value notifications
         if stmt_line.amount is None or stmt_line.amount == 0:
@@ -236,6 +221,26 @@ EUR,"13,87",
 
         return stmt_line
 
-    def parse_decimal(self, value):
+    def parse_decimal(self, value: Optional[str]) -> Optional[Decimal]:
         logger.debug('value: %s', value)
         return super().parse_decimal(value) if value else None
+
+
+class Plugin(BasePlugin):
+    """DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
+    """
+    def get_parser(self, f: str) -> Parser:
+        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
+        try:
+            account_id = self.settings['account_id']
+        except Exception:
+            raise RuntimeError("""
+Please define an 'account_id' in the ofxstatement configuration.
+
+Run
+
+$ ofxstatement edit-config
+
+for more information.
+""")
+        return Parser(fin, account_id)

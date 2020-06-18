@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
+from typing import Iterable, Set, Optional, List, Iterator, Any
+
 import sys
 import locale
 import re
 import io
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, date as dt
 from subprocess import check_output, CalledProcessError
 import logging
 
-from ofxstatement import plugin, parser
+from ofxstatement.plugin import Plugin as BasePlugin
+from ofxstatement.parser import StatementParser as BaseStatementParser
 
 from ofxstatement.plugins.nl.statement import Statement, StatementLine
 
@@ -19,29 +22,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Plugin(plugin.Plugin):
-    """ICSCards, The Netherlands, PDF (https://icscards.nl/)
-    """
+class Parser(BaseStatementParser):
+    unique_id_set: Set[str]
 
-    def get_file_object_parser(self, fh):
-        return Parser(fh)
-
-    def get_parser(self, filename):
-        pdftotext = ["pdftotext", "-layout", filename, '-']
-        fh = None
-
-        # Is it a PDF or an already converted file?
-        try:
-            fh = io.StringIO(check_output(pdftotext).decode())
-            # No exception: apparently it is a PDF.
-        except CalledProcessError:
-            fh = open(filename, "r")
-
-        return self.get_file_object_parser(fh)
-
-
-class Parser(parser.StatementParser):
-    def __init__(self, fin):
+    def __init__(self, fin: Iterable[str]) -> None:
         super().__init__()
         self.statement = Statement(bank_id=None,
                                    account_id=None,
@@ -49,13 +33,13 @@ class Parser(parser.StatementParser):
         self.fin = fin
         self.unique_id_set = set()
 
-    def parse(self):
+    def parse(self) -> Optional[Statement]:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
         process the file.
         """
-        stmt = None
+        stmt: Optional[Statement] = None
         # Save locale
         current_locale = locale.setlocale(category=locale.LC_ALL)
         # Need to parse "05 mei" i.e. "05 may"
@@ -64,7 +48,7 @@ class Parser(parser.StatementParser):
             # Python 3 needed
             stmt = super().parse()
 
-            if stmt.lines:
+            if stmt and stmt.lines:
                 stmt.start_date = min(sl.date for sl in stmt.lines)
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
@@ -72,8 +56,9 @@ class Parser(parser.StatementParser):
         return stmt
 
     @staticmethod
-    def get_amount(amount_in, transaction_type_in):
-        sign_out, amount_out = 1, None
+    def get_amount(amount_in: str, transaction_type_in: str) -> Decimal:
+        sign_out: int = 1
+        amount_out: Any
 
         # determine sign_out
         assert isinstance(transaction_type_in, str)
@@ -92,14 +77,14 @@ class Parser(parser.StatementParser):
             amount_out = amount_out.replace('.', '').replace(',', '.')
 
         # convert to str to keep just the last two decimals
-        amount_out = Decimal(str(amount_out))
+        return sign_out * Decimal(str(amount_out))
 
-        return sign_out * amount_out
-
-    def split_records(self):
+    def split_records(self) -> Iterator[Any]:
         """Return iterable object consisting of a line per transaction
         """
-        def convert_str_to_list(str, max_items=None, sep=r'\s\s+|\t|\n'):
+        def convert_str_to_list(str: str,
+                                max_items: Optional[int] = None,
+                                sep: str = r'\s\s+|\t|\n') -> List[str]:
             return [x for x in re.split(sep, str)[0:max_items]]
 
         first_line = True
@@ -121,7 +106,7 @@ class Parser(parser.StatementParser):
             logger.debug('line: %s', line)
 
             # to ease the parsing pain
-            row = convert_str_to_list(line)
+            row: List[str] = convert_str_to_list(line)
 
             if first_line and len(row) > 1:
                 assert row == first_line_row,\
@@ -175,11 +160,11 @@ class Parser(parser.StatementParser):
                     row[3] = row[3][25:]
                 yield row
 
-    def parse_record(self, row):
+    def parse_record(self, row: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object
         """
 
-        def add_years(d, years):
+        def add_years(d: dt, years: int) -> dt:
             """Return a date that's `years` years after the date (or datetime)
             object `d`. Return the same calendar date (month and day) in the
             destination year, if it exists, otherwise use the following day
@@ -190,7 +175,7 @@ class Parser(parser.StatementParser):
                 if d.month == 2 and d.day == 29 \
                 else d.replace(year=d.year + years)
 
-        def get_date(d_m: str):
+        def get_date(d_m: str) -> dt:
             # Without a year it will be 1900 so add the year
             d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
             d = datetime.strptime(d_m_y, '%d %b %Y').date()
@@ -204,7 +189,7 @@ class Parser(parser.StatementParser):
         logger.debug('row: %s', str(row))
         assert(len(row) in [5, 7, 8])
 
-        stmt_line = None
+        stmt_line: Optional[StatementLine] = None
         # GJP 2020-03-01
         # Skip transaction date (index 0) since it gives a wrong balance.
         # Use booking date (index 1) in order to get a correct balance.
@@ -232,3 +217,24 @@ class Parser(parser.StatementParser):
             stmt_line.adjust(self.unique_id_set)
 
         return stmt_line
+
+
+class Plugin(BasePlugin):
+    """ICSCards, The Netherlands, PDF (https://icscards.nl/)
+    """
+
+    def get_file_object_parser(self, fh: Iterable[str]) -> Parser:
+        return Parser(fh)
+
+    def get_parser(self, filename: str) -> Parser:
+        pdftotext = ["pdftotext", "-layout", filename, '-']
+        fh: Iterable[str]
+
+        # Is it a PDF or an already converted file?
+        try:
+            fh = io.StringIO(check_output(pdftotext).decode())
+            # No exception: apparently it is a PDF.
+        except CalledProcessError:
+            fh = open(filename, "r")
+
+        return self.get_file_object_parser(fh)

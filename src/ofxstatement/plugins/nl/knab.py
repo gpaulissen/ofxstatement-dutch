@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
+from typing import Iterable, Set, Optional, List, Iterator, Any
+
 import csv
 import sys
 import datetime
 import logging
 
-from ofxstatement import plugin, parser
+from ofxstatement.plugin import Plugin as BasePlugin
+from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError, ValidationError
 from ofxstatement.statement import BankAccount
 
@@ -17,15 +20,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Plugin(plugin.Plugin):
-    """KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)
-    """
-    def get_parser(self, f):
-        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
-        return Parser(fin)
-
-
-class Parser(parser.CsvStatementParser):
+class Parser(CsvStatementParser):
     """
 
     These are the first three lines of a KNAB CSV file:
@@ -107,11 +102,13 @@ Boekdatum;
         'bank_account_to': 5,  # Tegenrekeningnummer
     }
 
+    unique_id_set: Set[str]
+
     # Other mappings not used by parser.CsvStatementParser
     ACCOUNT = 0  # Rekeningnummer
     CD = 3  # CreditDebit
 
-    def __init__(self, fin):
+    def __init__(self, fin: Iterable[str]) -> None:
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for KNAB Online, The Netherlands
@@ -137,7 +134,7 @@ Boekdatum;
                         'Referentie',
                         'Boekdatum']]
 
-    def parse(self):
+    def parse(self) -> StatementLine:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -145,7 +142,7 @@ Boekdatum;
         """
 
         # Python 3 needed
-        stmt = super().parse()
+        stmt: StatementLine = super().parse()
 
         try:
             assert len(self.header) == 0,\
@@ -169,12 +166,12 @@ Boekdatum;
 
         return stmt
 
-    def split_records(self):
+    def split_records(self) -> Iterator[Any]:
         """Return iterable object consisting of a line per transaction
         """
         return csv.reader(self.fin, delimiter=';')
 
-    def parse_record(self, line):
+    def parse_record(self, line: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object
         """
 
@@ -217,7 +214,7 @@ this line's account: {}".format(self.statement.account_id,
                                      line[self.mappings['bank_account_to']])
 
             # Python 3 needed
-            stmt_line = super().parse_record(line)
+            stmt_line: StatementLine = super().parse_record(line)
 
             # Remove zero-value notifications
             if stmt_line.amount == 0:
@@ -241,3 +238,11 @@ this line's account: {}".format(self.statement.account_id,
             raise ParseError(self.cur_record, str(e))
 
         return stmt_line
+
+
+class Plugin(BasePlugin):
+    """KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)
+    """
+    def get_parser(self, f: str) -> Parser:
+        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
+        return Parser(fin)
