@@ -159,11 +159,7 @@ class Parser(CsvStatementParser):
             stmt.end_date = max(sl.date for sl in stmt.lines)
             stmt.end_date += datetime.timedelta(days=1)
         elif self.header_idx == 1:
-            stmt.start_date = min(sl.date for sl in stmt.lines)
-            assert stmt.lines[0].date == stmt.start_date or \
-                stmt.lines[-1].date == stmt.start_date
-            start_idx: int = 0 if stmt.lines[0].date == stmt.start_date else -1
-            stmt.start_balance = stmt.lines[start_idx].amount
+            stmt.start_date = stmt.start_balance = None
 
             stmt.end_date = max(sl.date for sl in stmt.lines)
             assert stmt.lines[0].date == stmt.end_date or \
@@ -279,6 +275,10 @@ this line's account: {}".format(self.statement.account_id, line[2])
         stmt_line: StatementLine = super().parse_record(line)
         stmt_line.trntype = "DEBIT" if stmt_line.amount < 0 else "CREDIT"
         stmt_line.id = 1
+        # Determine some fields not in the self.mappings
+        # A hack but needed to use the adjust method
+        stmt_line.__class__ = StatementLine
+        stmt_line.adjust(self.unique_id_set)
         return stmt_line
 
 

@@ -105,10 +105,8 @@ Kosten rekening IBAN: NL81ASNB0708271685 Valutadatum: 13-12-2019")
         self.assertEqual(statement.account_id, "NL99INGB9999999999")
         self.assertEqual(statement.account_type, "CHECKING")
 
-        self.assertEqual(statement.start_balance, Decimal('0'))
-        self.assertEqual(statement.start_date,
-                         datetime.strptime("2019-11-25",
-                                           parser.date_format))
+        self.assertIsNone(statement.start_balance)
+        self.assertIsNone(statement.start_date)
 
         self.assertEqual(statement.end_balance, Decimal('13.20'))
         self.assertEqual(statement.end_date,
