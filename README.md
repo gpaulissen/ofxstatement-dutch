@@ -21,38 +21,56 @@ The PDF is converted using the
 This is a quick start guide meant for users on a Windows 10 platform.
 
 These are the steps:
-1. install [Miniconda for Python 3.x](https://docs.conda.io/en/latest/miniconda.html)
-2. start the Anaconda prompt
+
+### 1. Install [Miniconda for Python 3.x](https://docs.conda.io/en/latest/miniconda.html)
+
+### 2. Start the Anaconda prompt
+
 Type Anaconda in the search box next to the Windows Start icon in the bottom left of your screen and click the Anaconda Prompt (Miniconda3).
 A command line box will open now with (base) as the prompt.
-3. create an ofxstatement environment:
+
+### 3. Create an ofxstatement environment
+
 In the command line box type "conda create -n ofxstatement":
 ```bash
 (base) conda create -n ofxstatement
 ```
 Please note that (base) is the command prompt, not a command to type.
-4. switch to the ofxstatement environment and show the installed packages (should be empty the first time):
+
+### 4. Switch to the ofxstatement environment and show the installed packages (should be empty the first time)
+
 ```bash
 (base) activate ofxstatement
 (ofxstatement) conda list
 ```
-5. install Python in this environment:
+
+### 5. Install Python in this environment
+
 ```bash
 (ofxstatement) conda install python
 ```
-6. verify the location of pip:
+
+### 6. Verify the location of pip
+
 ```bash
 (ofxstatement) where pip
 ```
 This should show something like C:\Users\%USERNAME%\Miniconda3\envs\ofxstatement\Scripts\pip.exe
-7. install ofxstatement-dutch
+
+### 7. Install ofxstatement-dutch
+
 ```bash
 (ofxstatement) pip install ofxstatement-dutch
 ```
-8. If you need to read PDF files (ICSCards for example), you need to install the Poppler library too:
+
+### 8. (optional) Install the Poppler library
+
+Only if you need to read PDF files (ICSCards for example):
 ```bash
 (ofxstatement) conda install -c conda-forge poppler
 ```
+
+### 9. Test the installation
 
 Now a small test to see everything works if you have a KNAB CSV file:
 
@@ -64,6 +82,8 @@ The dash (-) at the end of the command ensures that the OFX output will be
 sent to the terminal and not to a file.  The double quotes are needed for
 files with spaces in its name like
 "Knab transactieoverzicht spaarrekening XXXXXXXX - 2020-01-01 - 2020-05-01.csv".
+
+### 10. Launching ofxstatement
 
 Please remember to always start the Anaconda prompt and to activate the
 ofxstatement environment first before launching ofxstatement itself, since it

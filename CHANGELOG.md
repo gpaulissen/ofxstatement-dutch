@@ -7,11 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.3.0] - 2020-08-01
+## [1.3.1] - 2020-08-01
 
 ### Changed
 
-	- Added abimity to parse ING balance statements.
+	- Layout of the README improved.
+	- Contents of this CHANGELOG for version 1.3.0.
+
+## [1.3.0] - 2020-08-01
+
+### Added:
+
+	- Added ability to parse ING balance statements.
+
+### Changed
+
 	- Improved installation guide using Miniconda3
 	- Improved code quality by using pycodestyle and Python typing module
 
