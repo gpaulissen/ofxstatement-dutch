@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2020-08-01
+
+### Changed
+
+	- Added abimity to parse ING balance statements.
+	- Improved installation guide using Miniconda3
+	- Improved code quality by using pycodestyle and Python typing module
+
 ## [1.2.1] - 2020-05-01
 
 ### Changed

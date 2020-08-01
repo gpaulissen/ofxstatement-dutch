@@ -16,7 +16,70 @@ structure, that is then formatted into an OFX file.
 The PDF is converted using the
 [pdftotext](https://pypi.org/project/pdftotext/) utility.
 
+## Installation using Miniconda (minimal conda)
+
+This is a quick start guide meant for users on a Windows 10 platform.
+
+These are the steps:
+1. install [Miniconda for Python 3.x](https://docs.conda.io/en/latest/miniconda.html)
+2. start the Anaconda prompt
+Type Anaconda in the search box next to the Windows Start icon in the bottom left of your screen and click the Anaconda Prompt (Miniconda3).
+A command line box will open now with (base) as the prompt.
+3. create an ofxstatement environment:
+In the command line box type "conda create -n ofxstatement":
+```bash
+(base) conda create -n ofxstatement
+```
+Please note that (base) is the command prompt, not a command to type.
+4. switch to the ofxstatement environment and show the installed packages (should be empty the first time):
+```bash
+(base) activate ofxstatement
+(ofxstatement) conda list
+```
+5. install Python in this environment:
+```bash
+(ofxstatement) conda install python
+```
+6. verify the location of pip:
+```bash
+(ofxstatement) where pip
+```
+This should show something like C:\Users\%USERNAME%\Miniconda3\envs\ofxstatement\Scripts\pip.exe
+7. install ofxstatement-dutch
+```bash
+(ofxstatement) pip install ofxstatement-dutch
+```
+8. If you need to read PDF files (ICSCards for example), you need to install the Poppler library too:
+```bash
+(ofxstatement) conda install -c conda-forge poppler
+```
+
+Now a small test to see everything works if you have a KNAB CSV file:
+
+```bash
+(ofxstatement) ofxstatement convert -t nl-knab "<CSV file>" -
+```
+
+The dash (-) at the end of the command ensures that the OFX output will be
+sent to the terminal and not to a file.  The double quotes are needed for
+files with spaces in its name like
+"Knab transactieoverzicht spaarrekening XXXXXXXX - 2020-01-01 - 2020-05-01.csv".
+
+Please remember to always start the Anaconda prompt and to activate the
+ofxstatement environment first before launching ofxstatement itself, since it
+is only installed in that Conda environment.
+
+You may create a shortcut to combine both. The target of your shortcut should be something like:
+```
+C:\Windows\System32\cmd.exe /k C:\Users\%USERNAME%\Miniconda3\condabin\activate.bat ofxstatement
+```
+
+Please continue with the "Usage" section below.
+
 ## Installation
+
+This section is meant for people who do not want to follow the "Installation
+using Miniconda (minimal conda)" section above.
 
 ### Preconditions
 
