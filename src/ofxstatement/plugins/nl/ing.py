@@ -24,14 +24,10 @@ logger.addHandler(logging.NullHandler())
 class Parser(CsvStatementParser):
     """
 
-    These are the first two lines of an ING Netherlands CSV file:
+    This is the header of an ING Netherlands CSV file:
 
-    "Datum","Naam / Omschrijving","Rekening","Tegenrekening","Code",\
-"Af Bij","Bedrag (EUR)","MutatieSoort",\
-"Mededelingen"
-    "20200213","Kosten OranjePakket met korting","NL42INGB0001085276","","DV",\
-"Af","1,25","Diversen",\
-"1 jan t/m 31 jan 2020 ING BANK N.V. Valutadatum: 13-02-2020"
+    "Datum";"Naam / Omschrijving";"Rekening";"Tegenrekening";"Code";\
+"Af Bij";"Bedrag (EUR)";"Mutatiesoort";"Mededelingen";"Saldo na mutatie";"Tag"
 
     These fields are from the Statement class:
 
