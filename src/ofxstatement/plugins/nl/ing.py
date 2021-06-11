@@ -177,7 +177,7 @@ class Parser(CsvStatementParser):
     def split_records(self) -> Iterator[Any]:
         """Return iterable object consisting of a line per transaction
         """
-        return csv.reader(self.fin, delimiter=',')
+        return csv.reader(self.fin, delimiter=';')
 
     def parse_record(self,
                      line: List[Optional[str]]) -> Optional[StatementLine]:
