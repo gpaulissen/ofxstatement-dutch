@@ -90,8 +90,10 @@ class Parser(CsvStatementParser):
                                 "Code",
                                 "Af Bij",
                                 "Bedrag (EUR)",
-                                "MutatieSoort",
-                                "Mededelingen"],
+                                "Mutatiesoort",
+                                "Mededelingen",
+                                "Saldo na mutatie",
+                                "Tag"],
                                ["Datum",
                                 "Boeksaldo",
                                 "Valutair saldo"]]
