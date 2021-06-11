@@ -90,8 +90,10 @@ class Parser(CsvStatementParser):
                                 "Code",
                                 "Af Bij",
                                 "Bedrag (EUR)",
-                                "MutatieSoort",
-                                "Mededelingen"],
+                                "Mutatiesoort",
+                                "Mededelingen",
+                                "Saldo na mutatie",
+                                "Tag"],
                                ["Datum",
                                 "Boeksaldo",
                                 "Valutair saldo"]]
@@ -106,7 +108,7 @@ class Parser(CsvStatementParser):
         # check_no
         # refnum
         # trntype (determined later)
-        'bank_account_to': 3,
+        'bank_account_to': 1,
     }, {
         'date': 0,
         'amount': 2  # valutair
