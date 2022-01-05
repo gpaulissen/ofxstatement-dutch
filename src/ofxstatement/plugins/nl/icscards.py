@@ -43,7 +43,7 @@ class Parser(BaseStatementParser):
         # Save locale
         current_locale = locale.setlocale(category=locale.LC_ALL)
         # Need to parse "05 mei" i.e. "05 may"
-        locale.setlocale(category=locale.LC_ALL, locale="Dutch")
+        locale.setlocale(category=locale.LC_ALL, locale="nl_NL")
         try:
             # Python 3 needed
             stmt = super().parse()
