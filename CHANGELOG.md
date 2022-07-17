@@ -7,15 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-<<<<<<< HEAD
   - Reading CSV of the ASN Bank
-=======
+
 ## [1.3.3] - 2022-01-05
 
 ### Changed
 
   - Build and test behaviour reviewed
->>>>>>> 6ac987d9ba03151b0b5a40275a11f5d6ccf0fcfa
 
 ## [1.3.2] - 2020-08-02
 
