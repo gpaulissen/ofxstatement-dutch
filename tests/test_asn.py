@@ -35,14 +35,29 @@ class ParserTest(TestCase):
                                            parser.date_format))
 
         self.assertEqual(len(statement.lines), 11)
+        self.assertEqual(statement.lines[0].id, '20220617.51392971')
         self.assertEqual(statement.lines[0].amount, Decimal('223.77'))
         self.assertEqual(statement.lines[0].bank_account_to.acct_id, 'NL99ASNB0000000000')
         self.assertEqual(statement.lines[0].payee, 'XXXXXXXXX Z Z Z Z (NL99ASNB0000000000)')
+        self.assertEqual(statement.lines[0].date,
+                         datetime.strptime("17-06-2022",
+                                           parser.date_format))
+        self.assertEqual(statement.lines[0].date_user,
+                         statement.lines[0].date)
 
+        self.assertEqual(statement.lines[2].id, '20220625.50951652')
         self.assertIsNone(statement.lines[2].bank_account_to)
         self.assertIsNone(statement.lines[2].payee)
         self.assertEqual(statement.lines[2].memo,
                          "Kosten gebruik betaalrekening inclusief 1 betaalpas")
+
+        self.assertEqual(statement.lines[5].id, '20220629.50139616')
+        self.assertEqual(statement.lines[5].date,
+                         datetime.strptime("29-06-2022",
+                                           parser.date_format))
+        self.assertEqual(statement.lines[5].date_user,
+                         datetime.strptime("28-06-2022",
+                                           parser.date_format))
 
     @pytest.mark.xfail(raises=ParseError)
     def test_fail(self):

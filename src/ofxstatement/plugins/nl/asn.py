@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Iterator, Any, Dict
+from typing import Iterable, Optional, List, Iterator, Any, Dict
 
 import re
 import csv
@@ -168,9 +168,6 @@ class Parser(CsvStatementParser):
         'bank_account_to': 2,
     }
 
-    # variables
-    unique_id_set: Set[str]
-
     def __init__(self,
                  fin: Iterable[str],
                  account_id: Optional[str] = None) -> None:
@@ -180,7 +177,6 @@ class Parser(CsvStatementParser):
         self.statement = Statement(bank_id="ASNBNL21",
                                    account_id=account_id,
                                    currency="EUR")  # My Statement
-        self.unique_id_set = set()
 
     def parse(self) -> Statement:
         """Main entry point for parsers
@@ -257,17 +253,21 @@ this line's account: {}".format(self.statement.account_id, line[1])
         if stmt_line.amount == 0:
             return None
 
-        # Determine some fields not in the self.mappings
-        # A hack but needed to use the adjust methods
         stmt_line.__class__ = StatementLine
-        # stmt_line.adjust(self.unique_id_set)
-        stmt_line.id = "{}.{}".format(stmt_line.date,
-                                      line[transaction_nr])
 
-        if line[start_balance] is not None:
-            stmt_line.start_balance = Decimal(str(line[start_balance]))
-        else:
-            stmt_line.start_balance = Decimal(0)
+        # The unique id is a combination of 'Journaaldatum' and 'Volgnummer transactie'
+        # Let id be <Journaaldatum in yyyymmdd format>.<Volgnummer transactie>
+        assert self.mappings['date'] == 11  # Journaaldatum
+        assert transaction_nr == 15  # Volgnummer transactie
+
+        assert line[self.mappings['date']]
+        dd_mm_yyyy: str = str(line[self.mappings['date']])
+        stmt_line.id = "{}{}{}.{}".format(dd_mm_yyyy[6:],
+                                          dd_mm_yyyy[3:5],
+                                          dd_mm_yyyy[0:2],
+                                          line[transaction_nr])
+
+        stmt_line.start_balance = Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0)
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"
