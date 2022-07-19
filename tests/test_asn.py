@@ -1,7 +1,10 @@
 import os
 from unittest import TestCase
 from decimal import Decimal
+import pytest
 from datetime import datetime
+
+from ofxstatement.exceptions import ParseError
 
 from ofxstatement.plugins.nl.asn import Plugin
 
@@ -40,3 +43,12 @@ class ParserTest(TestCase):
         self.assertIsNone(statement.lines[2].payee)
         self.assertEqual(statement.lines[2].memo,
                          "Kosten gebruik betaalrekening inclusief 1 betaalpas")
+
+    @pytest.mark.xfail(raises=ParseError)
+    def test_fail(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'transactie-historie_fail.csv')
+        parser = Plugin(None, None).get_parser(text_filename)
+
+        # And parse csv:
+        parser.parse()

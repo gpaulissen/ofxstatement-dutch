@@ -5,6 +5,8 @@ PYTHON = python
 MYPY = mypy
 PIP = pip
 PROJECT = ofxstatement-dutch
+# Otherwise perl may complain on a Mac
+LANG = C
 
 # OS specific section
 ifeq '$(findstring ;,$(PATH))' ';'
@@ -24,29 +26,32 @@ endif
 
 .PHONY: clean install test dist distclean upload
 
-clean:
+help: ## This help.
+	@perl -ne 'printf(qq(%-30s  %s\n), $$1, $$2) if (m/^((?:\w|[.%-])+):.*##\s*(.*)$$/)' $(MAKEFILE_LIST)
+
+clean: ## Cleanup the package and remove it from the Python installation path.
 	$(PYTHON) setup.py clean --all
 	$(RM_EGGS)
 	$(PYTHON) -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"
 	$(PYTHON) -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"
 	-$(PYTHON) -Bc "import shutil; shutil.rmtree('.pytest_cache')"
 
-install: clean
+install: clean ## Install the package to the Python installation path.
 	$(PIP) install -e .
 	$(PIP) install -r test_requirements.txt
 
-test:
+test: ## Test the package.
 	$(MYPY) --show-error-codes src
 	$(PYTHON) -m pytest --exitfirst
 
-dist: install test
+dist: install test ## Prepare the distribution the package by installing and testing it.
 	$(PYTHON) setup.py sdist bdist_wheel
 	$(PYTHON) -m twine check dist/*
 
-upload_test: dist
+upload_test: dist ## Upload the package to PyPI test.
 	$(PYTHON) -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
-upload: dist
+upload: dist ## Upload the package to PyPI.
 	$(PYTHON) -m twine upload dist/*
 
 # This is GNU specific I guess
@@ -54,6 +59,6 @@ VERSION = $(shell $(PYTHON) __about__.py)
 
 TAG = v$(VERSION)
 
-tag:
+tag: ## Tag the package on GitHub.
 	git tag -a $(TAG) -m "$(TAG)"
 	git push origin $(TAG)
