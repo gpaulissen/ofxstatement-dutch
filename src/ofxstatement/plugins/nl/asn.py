@@ -25,49 +25,51 @@ logger.addHandler(logging.NullHandler())
 class Parser(CsvStatementParser):
     """
 
-    Veldnaam                     Formaat        Omschrijving                                                                            Voorbeeld
-    --------                     -------        ------------                                                                            ---------
-    Boekingsdatum                dd­mm­jjjj     Dit veld geeft de datum weer waarop de transactie daadwerkelijk heeft plaatsgevonden.   3­4­2000
-    Opdrachtgeversrekening       X (18)         Uw ASN­Rekening (IBAN).                                                                 NL01ASNB0123456789
-    Tegenrekeningnummer          X (34)         Dit veld bevat het rekeningnummer (IBAN) naar of waarvan de transactie afkomstig is.    NL01BANK0123456789
-                                                Het IBAN telt maximaal 34 alfanumerieke tekens en heeft een vaste lengte per land
-                                                Het IBAN bestaat uit een landcode (twee letters), een controlegetal (twee cijfers)
-                                                en een (voor bepaalde landen aangevuld) nationaal rekeningnummer.
-    Naam tegenrekening           X (70)         Hier wordt de naam van de tegenrekening vermeld.                                        jansen
-                                                De naam is maximaal 70 posities lang en wordt in kleine letters weergegeven.
-    Valutasoort rekening         XXX            Dit veld geeft de ISO valutasoort van de rekening weer.                                 EUR
-                                                Een bestand kan verschillende valutasoorten bevatten.
-    Saldo rekening voor mutatie  ­999999999.99  Geeft het saldo weer van de rekening voordat de mutatie is verwerkt.                    122800.83 of ­123.30
-                                                Als decimaal scheidingsteken wordt een punt gebruikt. Er wordt geen duizend separator
-                                                gebruikt. In het geval van een negatieve waarde wordt het bedrag voorafgegaan van een
-                                                – (min) teken.
-    Valutasoort mutatie          XXX            Dit veld geeft de ISO valutasoort van de mutatie weer.                                  EUR
-                                                Een bestand kan verschillende valutasoorten bevatten.
-
-    Transactiebedrag             ­999999999.99  Geeft het transactiebedrag weer. Als decimaal scheidingsteken wordt een punt gebruikt.  238.45 of ­43.90
-                                                Een negatief bedrag wordt voorafgegaan door een – (min) teken.
-    Journaaldatum                dd­mm­jjjj     De journaaldatum is de datum waarop een transactie in de systemen van ASN Bank wordt    21­01­2000
-                                                geboekt. Dit hoeft niet noodzakelijkerwijs gelijk te zijn aan de boekingsdatum.
-    Valutadatum                  dd­mm­jjjj     Dit veld geeft de valutadatum weer. De valutadatum is de datum waarop een bedrag        01­04­2001
-                                                rentedragend wordt.
-    Interne transactiecode       9999           Dit is een interne transactiecode zoals die door de ASN Bank wordt gebruikt. Deze       8810 of 9820
-                                                transactiecodes kunnen gebruikt worden om heel verfijnd betaalde transacties te
-                                                herkennen. Zoals een bijboeking van een geldautomaat opname. Er kan geen garantie
-                                                worden gegeven dat deze codes in de toekomst hetzelfde blijven en/of dat er codes
-                                                vervallen en/of toegevoegd zullen worden.
-    Globale transactiecode       XXX            De globale transactiecode is een vertaling van de interne transactiecode. Gebruikte     GEA of BEA of VV
-                                                afkortingen zijn bijvoorbeeld BEA voor een betaalautomaat opname of GEA voor een
-                                                geldautomaat opname. In de bijlage wordt een overzicht gegeven van alle gebruikte
-                                                afkortingen.
-                                                Zie ook Bijlage 1: Gebruikte boekingscodes
-    Volgnummer transactie        N (8)          Geeft het transactievolgnummer van de transactie weer. Dit volgnummer vormt samen met   90043054
-                                                de journaaldatum een uniek transactie id.
-    Betalingskenmerk             X (16)         Het betalingskenmerk bevat de meest relevante gegevens zoals die door de betaler zijn   ’factuur 9234820’
-                                                opgegeven. Zoals debiteuren nummer en/of factuurnummer. Het betalingskenmerk wordt
-                                                tussen enkele quotes (’) geplaatst.
-    Omschrijving                 X (140)        De omschrijving zoals die bij de overboeking is opgegeven. De omschrijving kan          ’02438000140032extra trekking werelddierendag 4info’
-                                                maximaal 140 posities beslaan.
-    Afschriftnummer              N (3)          Het nummer van het afschrift waar de betreffende boeking op staat vermeld.              42
+    Nr  Veldnaam                     Formaat        Omschrijving                                                                            Voorbeeld
+    --  --------                     -------        ------------                                                                            ---------
+     0  Boekingsdatum                dd­mm­jjjj     Dit veld geeft de datum weer waarop de transactie daadwerkelijk heeft plaatsgevonden.   3­4­2000
+     1  Opdrachtgeversrekening       X (18)         Uw ASN­Rekening (IBAN).                                                                 NL01ASNB0123456789
+     2  Tegenrekeningnummer          X (34)         Dit veld bevat het rekeningnummer (IBAN) naar of waarvan de transactie afkomstig is.    NL01BANK0123456789
+                                                    Het IBAN telt maximaal 34 alfanumerieke tekens en heeft een vaste lengte per land
+                                                    Het IBAN bestaat uit een landcode (twee letters), een controlegetal (twee cijfers)
+                                                    en een (voor bepaalde landen aangevuld) nationaal rekeningnummer.
+     3  Naam tegenrekening           X (70)         Hier wordt de naam van de tegenrekening vermeld.                                        jansen
+                                                    De naam is maximaal 70 posities lang en wordt in kleine letters weergegeven.
+     4  Adres                                       Dit veld is niet in gebruik.
+     5  Postcode                                    Dit veld is niet in gebruik.
+     6  Plaats                                      Dit veld is niet in gebruik
+     7  Valutasoort rekening         XXX            Dit veld geeft de ISO valutasoort van de rekening weer.                                 EUR
+                                                    Een bestand kan verschillende valutasoorten bevatten.
+     8  Saldo rekening voor mutatie  ­999999999.99  Geeft het saldo weer van de rekening voordat de mutatie is verwerkt.                    122800.83 of ­123.30
+                                                    Als decimaal scheidingsteken wordt een punt gebruikt. Er wordt geen duizend separator
+                                                    gebruikt. In het geval van een negatieve waarde wordt het bedrag voorafgegaan van een
+                                                    - (min) teken.
+     9  Valutasoort mutatie          XXX            Dit veld geeft de ISO valutasoort van de mutatie weer.                                  EUR
+                                                    Een bestand kan verschillende valutasoorten bevatten.
+    10  Transactiebedrag             ­999999999.99  Geeft het transactiebedrag weer. Als decimaal scheidingsteken wordt een punt gebruikt.  238.45 of ­43.90
+                                                    Een negatief bedrag wordt voorafgegaan door een - (min) teken.
+    11  Journaaldatum                dd­mm­jjjj     De journaaldatum is de datum waarop een transactie in de systemen van ASN Bank wordt    21­01­2000
+                                                    geboekt. Dit hoeft niet noodzakelijkerwijs gelijk te zijn aan de boekingsdatum.
+    12  Valutadatum                  dd­mm­jjjj     Dit veld geeft de valutadatum weer. De valutadatum is de datum waarop een bedrag        01­04­2001
+                                                    rentedragend wordt.
+    13  Interne transactiecode       9999           Dit is een interne transactiecode zoals die door de ASN Bank wordt gebruikt. Deze       8810 of 9820
+                                                    transactiecodes kunnen gebruikt worden om heel verfijnd betaalde transacties te
+                                                    herkennen. Zoals een bijboeking van een geldautomaat opname. Er kan geen garantie
+                                                    worden gegeven dat deze codes in de toekomst hetzelfde blijven en/of dat er codes
+                                                    vervallen en/of toegevoegd zullen worden.
+    14  Globale transactiecode       XXX            De globale transactiecode is een vertaling van de interne transactiecode. Gebruikte     GEA of BEA of VV
+                                                    afkortingen zijn bijvoorbeeld BEA voor een betaalautomaat opname of GEA voor een
+                                                    geldautomaat opname. In de bijlage wordt een overzicht gegeven van alle gebruikte
+                                                    afkortingen.
+                                                    Zie ook Bijlage 1: Gebruikte boekingscodes
+    15  Volgnummer transactie        N (8)          Geeft het transactievolgnummer van de transactie weer. Dit volgnummer vormt samen met   90043054
+                                                    de journaaldatum een uniek transactie id.
+    16  Betalingskenmerk             X (16)         Het betalingskenmerk bevat de meest relevante gegevens zoals die door de betaler zijn   ’factuur 9234820’
+                                                    opgegeven. Zoals debiteuren nummer en/of factuurnummer. Het betalingskenmerk wordt
+                                                    tussen enkele quotes (’) geplaatst.
+    17  Omschrijving                 X (140)        De omschrijving zoals die bij de overboeking is opgegeven. De omschrijving kan          ’02438000140032extra trekking werelddierendag 4info’
+                                                    maximaal 140 posities beslaan.
+    18  Afschriftnummer              N (3)          Het nummer van het afschrift waar de betreffende boeking op staat vermeld.              42
 
     ===
 
@@ -155,12 +157,11 @@ class Parser(CsvStatementParser):
     # 0-based
     mappings: Dict[str, int] = {
         # id (determined later)
-        'date': 0,
+        'date': 11,
         'memo': 17,
-        'start_balance': 8,
         'amount': 10,
         'payee': 3,  # if bank_account_to is filled
-        # date_user
+        'date_user': 0,
         # check_no
         # refnum
         # trntype (determined later)
@@ -231,6 +232,9 @@ class Parser(CsvStatementParser):
 
     def parse_transaction(self,
                           line: List[Optional[str]]) -> Optional[StatementLine]:
+        start_balance: int = 8
+        transaction_nr: int = 15
+
         # line[1] contains the account number
         if self.statement.account_id:
             assert self.statement.account_id == line[1],\
@@ -256,7 +260,14 @@ this line's account: {}".format(self.statement.account_id, line[1])
         # Determine some fields not in the self.mappings
         # A hack but needed to use the adjust methods
         stmt_line.__class__ = StatementLine
-        stmt_line.adjust(self.unique_id_set)
+        # stmt_line.adjust(self.unique_id_set)
+        stmt_line.id = "{}.{}".format(stmt_line.date,
+                                      line[transaction_nr])
+
+        if line[start_balance] is not None:
+            stmt_line.start_balance = Decimal(str(line[start_balance]))
+        else:
+            stmt_line.start_balance = Decimal(0)
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"

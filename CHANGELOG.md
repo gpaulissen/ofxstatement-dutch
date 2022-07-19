@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2022-07-19
+
+### Added
+
+  - Added "SHELL = cmd" to Makefile for Windows
+
+### Changed
+
+  - Transaction date is now 'Journaaldatum' and not 'Boekingsdatum' for ASN CSV.
+  - Enhanced documentation for ASN CSV.
+
 ## [1.4.0] - 2022-07-19
 
 ### Added
