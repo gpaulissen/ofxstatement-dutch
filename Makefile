@@ -60,6 +60,9 @@ VERSION = $(shell $(PYTHON) __about__.py)
 
 TAG = v$(VERSION)
 
+BRANCH = master
+
 tag: ## Tag the package on GitHub.
 	git tag -a $(TAG) -m "$(TAG)"
 	git push origin $(TAG)
+	gh release create $(TAG) --target $(BRANCH) --title "Release $(TAG)" --notes "See CHANGELOG"
