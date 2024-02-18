@@ -148,11 +148,11 @@ Koop 0,001337 @ 9.986,9062 EUR MORGAN STANLEY EUR LIQUIDITY FUND \
                                    memo='Rente #2',
                                    amount='-0,02'))
 
-        lines = [l
-                 for l in lines
-                 if l.amount and l.memo in ['iDEAL storting',
-                                            'Terugstorting',
-                                            'Terugstorting #2']]
+        lines = [line
+                 for line in lines
+                 if line.amount and line.memo in ['iDEAL storting',
+                                                  'Terugstorting',
+                                                  'Terugstorting #2']]
         self.assertEqual(len(statement.lines), len(lines))
 
         for idx, line in enumerate(statement.lines):

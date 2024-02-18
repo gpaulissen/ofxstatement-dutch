@@ -94,6 +94,7 @@ if __name__ == '__main__':
             ['nl-degiro = ofxstatement.plugins.nl.degiro:Plugin',
              'nl-icscards = ofxstatement.plugins.nl.icscards:Plugin',
              'nl-ing = ofxstatement.plugins.nl.ing:Plugin',
-             'nl-knab = ofxstatement.plugins.nl.knab:Plugin']
+             'nl-knab = ofxstatement.plugins.nl.knab:Plugin',
+             'nl-asn = ofxstatement.plugins.nl.asn:Plugin']
         },
     )
