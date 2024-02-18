@@ -134,7 +134,7 @@ EUR,"13,87",
         stmt: Statement = super().parse()
 
         try:
-            assert len(self.header) == 0,\
+            assert len(self.header) == 0, \
                 "Header not completely read: {}".format(str(self.header))
         except Exception as e:
             raise ParseError(0, str(e))
@@ -171,7 +171,7 @@ EUR,"13,87",
             # Remove it since it need not be checked anymore
             hdr = self.header.pop(0)
             logger.debug('header: %s', hdr)
-            assert line == hdr,\
+            assert line == hdr, \
                 "Expected: {}\ngot: {}".format(hdr, line)
             return None
 
@@ -196,7 +196,7 @@ EUR,"13,87",
             stmt_line.trntype = "SRVCHG"
         elif stmt_line.memo == 'Terugstorting':
             stmt_line.trntype = "XFER"
-        elif stmt_line.memo in ['Storting', 'iDEAL storting']:
+        elif stmt_line.memo in ['Storting', 'iDEAL storting', 'iDEAL Deposit']:
             stmt_line.trntype = "DEP"
         elif stmt_line.amount < 0:  # pragma: no cover
             stmt_line.trntype = "DEBIT"

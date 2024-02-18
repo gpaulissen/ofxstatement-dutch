@@ -1,65 +1,70 @@
 ## -*- mode: make -*-
 
 # project specific
-PROJECT  := ofxstatement-dutch
-ABOUT_PY := __about__.py
-BRANCH 	 := master
+PROJECT            := ofxstatement-dutch
+ABOUT_PY 	         := __about__.py
+BRANCH 	           := master
 
-GIT = git
+GIT                := git
 # least important first (can not stop easily in foreach)
-PYTHON_EXECUTABLES = python python3 
+PYTHON_EXECUTABLES := python python3 
 MYPY = mypy
-PIP = $(PYTHON) -m pip
+# PYTHON is determined later on so do not use PIP := but PIP =
+PIP                 = $(PYTHON) -O -m pip $(VERBOSE)
+MYPY               := mypy
 # Otherwise perl may complain on a Mac
 LANG = C
+PYTEST_OPTIONS     := --exitfirst
+
 # This is GNU specific I guess
 VERSION = $(shell $(PYTHON) $(ABOUT_PY))
 TAG = v$(VERSION)
 
 # OS specific section
 ifeq '$(findstring ;,$(PATH))' ';'
-    detected_OS := Windows
-    HOME = $(USERPROFILE)
-	  DEVNUL := NUL
-	  WHICH := where
+detected_OS := Windows
+HOME = $(USERPROFILE)
+DEVNUL := NUL
+WHICH := where
+GREP := find
+EXE := .exe
 else
-    detected_OS := $(shell uname 2>/dev/null || echo Unknown)
-    detected_OS := $(patsubst CYGWIN%,Cygwin,$(detected_OS))
-    detected_OS := $(patsubst MSYS%,MSYS,$(detected_OS))
-    detected_OS := $(patsubst MINGW%,MSYS,$(detected_OS))
-	  DEVNUL := /dev/null
-	  WHICH := which
-endif
-
-$(foreach e,$(PYTHON_EXECUTABLES),$(if $(shell ${WHICH} ${e} 2>${DEVNUL}),$(eval PYTHON := ${e}),))
-
-ifndef PYTHON
-    $(error Could not find any Python executable from ${PYTHON_EXECUTABLES})
+detected_OS := $(shell uname 2>/dev/null || echo Unknown)
+detected_OS := $(patsubst CYGWIN%,Cygwin,$(detected_OS))
+detected_OS := $(patsubst MSYS%,MSYS,$(detected_OS))
+detected_OS := $(patsubst MINGW%,MSYS,$(detected_OS))
+DEVNUL := /dev/null
+WHICH := which
+GREP := grep
+EXE := 
 endif
 
 ifdef CONDA_PREFIX
-    home = $(CONDA_PREFIX)
+home = $(subst \,/,$(CONDA_PREFIX))
 else
-    home = $(HOME)
+home = $(HOME)
 endif
 
-ifeq ($(detected_OS),Windows)
-    RM_EGGS = pushd $(home) && del /s/q $(PROJECT).egg-link $(PROJECT)-nspkg.pth
+ifdef CONDA_PYTHON_EXE
+# look no further
+PYTHON := $(subst \,/,$(CONDA_PYTHON_EXE))
 else
-    RM_EGGS = { cd $(home) && find . \( -name $(PROJECT).egg-link -o -name $(PROJECT)-nspkg.pth \) -print -exec rm -i "{}" \; ; }
+# On Windows those executables may exist but not functional yet (can be used to install) so use Python -V
+$(foreach e,$(PYTHON_EXECUTABLES),$(if $(shell ${e}${EXE} -V 3>${DEVNUL}),$(eval PYTHON := ${e}${EXE}),))
 endif
 
-.PHONY: clean install test dist distclean upload_test upload tag
+ifndef PYTHON
+$(error Could not find any Python executable from ${PYTHON_EXECUTABLES}.)
+endif
+
+.PHONY: clean install test dist upload_test upload tag
 
 help: ## This help.
 	@perl -ne 'printf(qq(%-30s  %s\n), $$1, $$2) if (m/^((?:\w|[.%-])+):.*##\s*(.*)$$/)' $(MAKEFILE_LIST)
 
 clean: ## Cleanup the package and remove it from the Python installation path.
 	$(PYTHON) setup.py clean --all
-	-$(RM_EGGS)
-	$(PYTHON) -Bc "import pathlib; [p.unlink() for p in pathlib.Path('.').rglob('*.py[co]')]"
-	$(PYTHON) -Bc "import pathlib; [p.rmdir() for p in pathlib.Path('.').rglob('__pycache__')]"
-	$(PYTHON) -Bc "import shutil; import os; [shutil.rmtree(d) for d in ['.pytest_cache', '.mypy_cache', 'dist', 'htmlcov', '.coverage'] if os.path.isdir(d)]"
+	$(GIT) clean -d -x -i
 
 install: clean ## Install the package to the Python installation path.
 	$(PIP) install -e .
@@ -69,12 +74,9 @@ test: ## Test the package.
 	$(MYPY) --show-error-codes src
 	$(PYTHON) -m pytest --exitfirst
 
-dist: install ## Prepare the distribution the package by installing and testing it.
+dist: install test ## Prepare the distribution the package by installing and testing it.
 	$(PYTHON) setup.py sdist bdist_wheel
 	$(PYTHON) -m twine check dist/*
-
-distclean: ## Runs clean first and then cleans up dependency include files. 
-	cd src && $(MAKE) distclean
 
 upload_test: dist ## Upload the package to PyPI test.
 	$(PYTHON) -m twine upload -r pypitest dist/*

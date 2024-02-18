@@ -109,7 +109,7 @@ class Parser(BaseStatementParser):
             row: List[str] = convert_str_to_list(line)
 
             if first_line and len(row) > 1:
-                assert row == first_line_row,\
+                assert row == first_line_row, \
                     "Expected: {0}\nActual: {1}".format(first_line_row, row)
                 first_line = False
 
@@ -187,7 +187,7 @@ class Parser(BaseStatementParser):
             return d
 
         logger.debug('row: %s', str(row))
-        assert(len(row) in [5, 7, 8])
+        assert len(row) in [5, 7, 8]
 
         stmt_line: Optional[StatementLine] = None
         # GJP 2020-03-01

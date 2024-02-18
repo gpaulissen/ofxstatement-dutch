@@ -233,7 +233,7 @@ class Parser(CsvStatementParser):
 
         # line[1] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[1],\
+            assert self.statement.account_id == line[1], \
                 "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id, line[1])
         else:
