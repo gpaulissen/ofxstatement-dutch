@@ -142,7 +142,7 @@ class Parser(CsvStatementParser):
         stmt: Statement = super().parse()
 
         try:
-            assert self.header_idx >= 0 and self.header_idx < len(self.header),\
+            assert self.header_idx >= 0 and self.header_idx < len(self.header), \
                 "Header not read: {}".format(str(self.header))
         except Exception as e:
             raise ParseError(0, str(e))
@@ -201,7 +201,7 @@ class Parser(CsvStatementParser):
 
                 msg: str = "Line {} does not match\n\n{}\n\nnor\n\n{}\n"
 
-                assert self.header_idx in [0, 1],\
+                assert self.header_idx in [0, 1], \
                     msg.format(line, self.header[0], self.header[1])
 
                 self.mappings = self.mappings_by_header[self.header_idx]
@@ -221,7 +221,7 @@ class Parser(CsvStatementParser):
                           line: List[Optional[str]]) -> Optional[StatementLine]:
         # line[2] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[2],\
+            assert self.statement.account_id == line[2], \
                 "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id, line[2])
         else:

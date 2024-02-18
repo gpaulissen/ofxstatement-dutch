@@ -145,7 +145,7 @@ Boekdatum;
         stmt: StatementLine = super().parse()
 
         try:
-            assert len(self.header) == 0,\
+            assert len(self.header) == 0, \
                 "Header not completely read: {}".format(str(self.header))
         except Exception as e:
             raise ParseError(0, str(e))
@@ -187,21 +187,21 @@ Boekdatum;
                 hdr = self.header.pop(0)
                 line = list(filter(None, line))
                 logger.debug('header: %s', hdr)
-                assert line == hdr,\
+                assert line == hdr, \
                     "Expected: {}\ngot: {}".format(hdr, line)
                 return None
 
             # line[self.ACCOUNT] contains the account number
             if self.statement.account_id:
                 assert self.statement.account_id == \
-                    line[self.ACCOUNT],\
+                    line[self.ACCOUNT], \
                     "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id,
                                 line[self.ACCOUNT])
             else:
                 self.statement.account_id = line[self.ACCOUNT]
 
-            assert line[self.CD] in ['D', 'C'],\
+            assert line[self.CD] in ['D', 'C'], \
                 "Element {} is not D/C in line {}".format(self.CD, str(line))
 
             if line[self.CD] == 'D':
