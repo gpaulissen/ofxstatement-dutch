@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.0] - 2024-03-16
 
-- [When there are no money transactions for deGiro there should be no error message.](https://github.com/gpaulissen/ofxstatement-dutch/issues/6)
+- [When there are no money transactions there should be no error message about start/end date/balance.](https://github.com/gpaulissen/ofxstatement-dutch/issues/6)
 
 ## [1.5.0] - 2024-02-18
 
