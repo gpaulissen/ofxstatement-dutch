@@ -12,10 +12,10 @@ class Statement(BaseStatement):
     def assert_valid(self) -> None:
         try:
             super().assert_valid()
-            assert self.end_date, "The statement end date should be set"
             # An ING CSV may be a balance file resulting in 0 lines
             if len(self.lines) == 0:
                 return
+            assert self.end_date, "The statement end date should be set"
             min_date = min(sl.date for sl in self.lines)
             max_date = max(sl.date for sl in self.lines)
             assert self.start_date <= min_date, \
