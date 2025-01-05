@@ -191,13 +191,13 @@ class Parser(CsvStatementParser):
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
         # But set the dates.
-        stmt.start_date = min(sl.date for sl in stmt.lines)
-        # end date is exclusive for OFX
-        stmt.end_date = max(sl.date for sl in stmt.lines)
-        stmt.end_date += datetime.timedelta(days=1)
-
-        stmt.start_balance = Decimal(stmt.lines[0].start_balance)
-        stmt.end_balance = Decimal(stmt.lines[-1].start_balance) + stmt.lines[-1].amount
+        if stmt.lines:
+            stmt.start_date = min(sl.date for sl in stmt.lines)
+            # end date is exclusive for OFX
+            stmt.end_date = max(sl.date for sl in stmt.lines)
+            stmt.end_date += datetime.timedelta(days=1)
+            stmt.start_balance = Decimal(stmt.lines[0].start_balance)
+            stmt.end_balance = Decimal(stmt.lines[-1].start_balance) + stmt.lines[-1].amount
 
         return stmt
 

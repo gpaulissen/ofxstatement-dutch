@@ -143,10 +143,11 @@ EUR,"13,87",
         # No need to (re)calculate the balance since there is no history.
         # But set the dates.
         stmt.start_balance = stmt.end_balance = None
-        stmt.start_date = min(sl.date for sl in stmt.lines)
-        # end date is exclusive for OFX
-        stmt.end_date = max(sl.date for sl in stmt.lines)
-        stmt.end_date += datetime.timedelta(days=1)
+        if stmt.lines:
+            stmt.start_date = min(sl.date for sl in stmt.lines)
+            # end date is exclusive for OFX
+            stmt.end_date = max(sl.date for sl in stmt.lines)
+            stmt.end_date += datetime.timedelta(days=1)
 
         logger.debug('stmt: %r', stmt)
 
