@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.1] - 2025-04-20
+
+- [The new ICS PDF file (since April 2025) does not have a space between the euro sign and the amount.](https://github.com/gpaulissen/ofxstatement-dutch/issues/10)
+
 ## [1.6.0] - 2024-03-16
 
 - [When there are no money transactions there should be no error message about start/end date/balance.](https://github.com/gpaulissen/ofxstatement-dutch/issues/6)

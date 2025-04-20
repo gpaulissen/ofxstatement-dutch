@@ -47,7 +47,7 @@ class ParserTest(TestCase):
 
         self.assertEqual(statement.lines[2].id, '20220625.50951652')
         self.assertIsNone(statement.lines[2].bank_account_to)
-        self.assertIsNone(statement.lines[2].payee)
+        self.assertFalse(statement.lines[2].payee)
         self.assertEqual(statement.lines[2].memo,
                          "Kosten gebruik betaalrekening inclusief 1 betaalpas")
 

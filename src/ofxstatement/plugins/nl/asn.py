@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Optional, List, Iterator, Any, Dict
+from typing import Optional, List, Iterator, Any, Dict, TextIO
 
 import re
 import csv
@@ -169,7 +169,7 @@ class Parser(CsvStatementParser):
     }
 
     def __init__(self,
-                 fin: Iterable[str],
+                 fin: TextIO,
                  account_id: Optional[str] = None) -> None:
         # Python 3 needed
         super().__init__(fin)
@@ -208,11 +208,11 @@ class Parser(CsvStatementParser):
         return csv.reader(self.fin, delimiter=',', quotechar="'")
 
     def parse_record(self,
-                     line: List[Optional[str]]) -> Optional[StatementLine]:
+                     line: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object
         """
 
-        stmt_line: Optional[StatementLine] = None
+        stmt_line: StatementLine
 
         try:
             logger.debug('line #%d: %s',
@@ -227,7 +227,7 @@ class Parser(CsvStatementParser):
         return stmt_line
 
     def parse_transaction(self,
-                          line: List[Optional[str]]) -> Optional[StatementLine]:
+                          line: List[str]) -> Optional[StatementLine]:
         start_balance: int = 8
         transaction_nr: int = 15
 
@@ -244,7 +244,7 @@ this line's account: {}".format(self.statement.account_id, line[1])
                 "{} ({})".format(line[self.mappings['payee']],
                                  line[self.mappings['bank_account_to']])
         else:
-            line[self.mappings['payee']] = None
+            line[self.mappings['payee']] = ''
 
         # Python 3 needed
         stmt_line: StatementLine = super().parse_record(line)
@@ -276,7 +276,7 @@ this line's account: {}".format(self.statement.account_id, line[1])
 
         if stmt_line.bank_account_to:
             stmt_line.bank_account_to = \
-                BankAccount(bank_id=None,
+                BankAccount(bank_id='',
                             acct_id=stmt_line.bank_account_to)
         else:
             stmt_line.bank_account_to = None

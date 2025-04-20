@@ -29,7 +29,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.end_balance, Decimal('-1320.55'))
         self.assertEqual(statement.end_date,
                          datetime.strptime("2019-09-17",
-                                           parser.date_format).date())
+                                           parser.date_format))
 
         self.assertEqual(len(statement.lines), 25)
         self.assertEqual(statement.lines[0].amount, Decimal('1311.73'))
@@ -65,8 +65,7 @@ class ParserTest(TestCase):
                                            parser.date_format).date())
         self.assertEqual(statement.end_balance, Decimal('-1156.34'))
         self.assertEqual(statement.end_date,
-                         datetime.strptime("2019-01-17",
-                                           parser.date_format).date())
+                         datetime.strptime("2019-01-17", parser.date_format))
 
     def test_error(self):
         # Create and configure parser:

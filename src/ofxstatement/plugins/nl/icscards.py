@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Parser(BaseStatementParser):
+class Parser(BaseStatementParser):  # type: ignore
     unique_id_set: Set[str]
 
     def __init__(self, fin: Iterable[str]) -> None:
@@ -33,7 +33,7 @@ class Parser(BaseStatementParser):
         self.fin = fin
         self.unique_id_set = set()
 
-    def parse(self) -> Optional[Statement]:
+    def parse(self) -> Statement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -49,7 +49,7 @@ class Parser(BaseStatementParser):
             stmt = super().parse()
 
             if stmt and stmt.lines:
-                stmt.start_date = min(sl.date for sl in stmt.lines)
+                stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
 
@@ -70,11 +70,16 @@ class Parser(BaseStatementParser):
         # determine amount_out
         assert isinstance(amount_in, str)
         # Amount something like 1.827,97, € 1.827,97 (both dutch) or 1,827.97?
-        m = re.search(r'^(\S+\s)?([0-9,.]+)$', amount_in)
+        # Since April 2025 it may be €1.827,97 as well
+        m = re.search(r'^(\D+\s?)?([0-9,.]+)$', amount_in)
         assert m is not None
         amount_out = m.group(2)
-        if amount_out[-3] == ',':
-            amount_out = amount_out.replace('.', '').replace(',', '.')
+        try:
+            if amount_out[-3] == ',':
+                amount_out = amount_out.replace('.', '').replace(',', '.')
+        except Exception as e:
+            print('amount_in: %r; amount_out: %r' % (amount_in, amount_out))
+            raise e
 
         # convert to str to keep just the last two decimals
         return sign_out * Decimal(str(amount_out))
@@ -120,10 +125,10 @@ class Parser(BaseStatementParser):
                 new_page = True
             elif new_page:
                 new_page = False
-                self.statement.end_date = row[0]  # exclusive in ICSCards
+                # exclusive in ICSCards
                 self.statement.end_date = \
-                    datetime.strptime(self.statement.end_date,
-                                      '%d %B %Y').date()
+                    datetime.strptime(row[0],
+                                      '%d %B %Y')
                 self.statement.account_id = row[1]
 
             elif row == balance_row:
@@ -177,13 +182,14 @@ class Parser(BaseStatementParser):
 
         def get_date(d_m: str) -> dt:
             # Without a year it will be 1900 so add the year
+            assert self.statement.end_date and self.statement.end_date.year
             d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
             d = datetime.strptime(d_m_y, '%d %b %Y').date()
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
-            if d > self.statement.end_date:
+            if d and d > self.statement.end_date.date():
                 d = add_years(d, -1)
-            assert d <= self.statement.end_date
+            assert d is None or d <= self.statement.end_date.date()
             return d
 
         logger.debug('row: %s', str(row))
