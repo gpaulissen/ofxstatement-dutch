@@ -14,7 +14,8 @@ PIP                 = $(PYTHON) -O -m pip $(VERBOSE)
 MYPY               := mypy
 # Otherwise perl may complain on a Mac
 LANG = C
-PYTEST_OPTIONS     := --exitfirst
+PYTEST_LOG_LEVEL   := INFO
+PYTEST_OPTIONS     := --log-level=$(PYTEST_LOG_LEVEL) --exitfirst
 
 # This is GNU specific I guess
 VERSION = $(shell $(PYTHON) $(ABOUT_PY))
@@ -72,7 +73,7 @@ install: clean ## Install the package to the Python installation path.
 test: ## Test the package.
 	$(PIP) install -r test_requirements.txt
 	$(MYPY) --show-error-codes src
-	$(PYTHON) -m pytest --exitfirst
+	$(PYTHON) -m pytest $(PYTEST_OPTIONS)
 
 dist: install test ## Prepare the distribution the package by installing and testing it.
 	$(PYTHON) setup.py sdist bdist_wheel
