@@ -50,6 +50,7 @@ class Parser(BaseStatementParser):  # type: ignore
 
             if stmt and stmt.lines:
                 stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
+            stmt.assert_valid()
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
 
@@ -71,15 +72,11 @@ class Parser(BaseStatementParser):  # type: ignore
         assert isinstance(amount_in, str)
         # Amount something like 1.827,97, € 1.827,97 (both dutch) or 1,827.97?
         # Since April 2025 it may be €1.827,97 as well
-        m = re.search(r'^(\D+\s?)?([0-9,.]+)$', amount_in)
+        m = re.search(r'^(\S+\s|\D)?([0-9,.]+)$', amount_in)
         assert m is not None
         amount_out = m.group(2)
-        try:
-            if amount_out[-3] == ',':
-                amount_out = amount_out.replace('.', '').replace(',', '.')
-        except Exception as e:
-            print('amount_in: %r; amount_out: %r' % (amount_in, amount_out))
-            raise e
+        if amount_out[-3] == ',':
+            amount_out = amount_out.replace('.', '').replace(',', '.')
 
         # convert to str to keep just the last two decimals
         return sign_out * Decimal(str(amount_out))
@@ -102,8 +99,11 @@ class Parser(BaseStatementParser):  # type: ignore
         balance_row = ['Vorig openstaand saldo', 'Totaal ontvangen betalingen',
                        'Totaal nieuwe uitgaven', 'Nieuw openstaand saldo']
 
+        # 01 sep          01 sep            IDEAL BETALING, DANK U                                                                                                          1.311,73       Bij
+        # 21 feb         22 feb            APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
         statement_expr = \
             re.compile(r'^\d\d [a-z]{3}\s+\d\d [a-z]{3}.+[0-9,.]+\s+(Af|Bij)$')
+        country = re.compile("^[A-Z][A-Z]$")
 
         for line in self.fin:
             line = line.strip()
@@ -141,12 +141,11 @@ class Parser(BaseStatementParser):  # type: ignore
                                                                row[-1])
 
             elif re.search(statement_expr, line):
-                # payee (column 2), place and contry may be something like:
+                # payee, place and country may be something like:
                 #
                 # THY|2357312380512|Istanbul|US
                 #
                 # hence four columns instead of three, so combine the first two
-                country = re.compile("^[A-Z][A-Z]$")
                 for i in reversed(range(len(row))):
                     if country.match(row[i]):
                         # Should have 4 columns to the left. If not: reduce.

@@ -21,7 +21,7 @@ class Statement(BaseStatement):
             assert self.start_date and min_date and self.start_date <= min_date, \
                 "The statement start date ({}) should at most the smallest \
 statement line date ({})".format(self.start_date, min_date)
-            assert self.end_date > max_date, \
+            assert self.end_date and self.end_date.date() > max_date, \
                 "The statement end date ({}) should be greater than the \
 largest statement line date ({})".format(self.end_date, max_date)
         except Exception as e:
