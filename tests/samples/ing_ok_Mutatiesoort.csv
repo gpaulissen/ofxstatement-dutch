@@ -1,4 +1,4 @@
-"Datum","Naam / Omschrijving","Rekening","Tegenrekening","Code","Af Bij","Bedrag (EUR)","MutatieSoort","Mededelingen"
+"Datum","Naam / Omschrijving","Rekening","Tegenrekening","Code","Af Bij","Bedrag (EUR)","Mutatiesoort","Mededelingen"
 "20200213","Kosten OranjePakket met korting","NL99INGB9999999999","","DV","Af","1,25","Diversen","1 jan t/m 31 jan 2020 ING BANK N.V. Valutadatum: 13-02-2020"
 "20200213","Kwijtschelding","NL99INGB9999999999","","VZ","Bij","1,25","Verzamelbetaling","Valutadatum: 13-02-2020"
 "20200213","Kwijtschelding","NL99INGB9999999999","","VZ","Bij","0,00","Verzamelbetaling","Valutadatum: 13-02-2020"

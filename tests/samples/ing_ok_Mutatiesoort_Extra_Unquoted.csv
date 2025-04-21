@@ -1,0 +1,7 @@
+Datum;Naam / Omschrijving;Rekening;Tegenrekening;Code;Af Bij;Bedrag (EUR);Mutatiesoort;Mededelingen;Extra
+20200213;Kosten OranjePakket met korting;NL99INGB9999999999;;DV;Af;1,25;Diversen;1 jan t/m 31 jan 2020 ING BANK N.V. Valutadatum: 13-02-2020;E
+20200213;Kwijtschelding;NL99INGB9999999999;;VZ;Bij;1,25;Verzamelbetaling;Valutadatum: 13-02-2020;x
+20200213;Kwijtschelding;NL99INGB9999999999;;VZ;Bij;0,00;Verzamelbetaling;Valutadatum: 13-02-2020;t
+20191213;PAULISSEN G J L M;NL99INGB9999999999;NL99ASNB9999999999;OV;Bij;20,00;Overschrijving;Naam: PAULISSEN G J L M Omschrijving: Kosten rekening IBAN: NL99ASNB9999999999 Valutadatum: 13-12-2019;r
+20191213;Kosten OranjePakket;NL99INGB9999999999;;DV;Af;0,31;Diversen;25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019;a
+20191213;Kosten OranjePakket;NL99INGB9999999999;;DV;Af;0,31;Diversen;25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019;-
