@@ -39,24 +39,18 @@ class Parser(BaseStatementParser):  # type: ignore
         super() implementation will call to split_records and parse_record to
         process the file.
         """
-        logger.debug("self before: type: %s; contents: %s", type(self), self)
         stmt: Optional[Statement] = None
         # Save locale
         current_locale = locale.setlocale(category=locale.LC_ALL)
         # Need to parse "05 mei" i.e. "05 may"
         locale.setlocale(category=locale.LC_ALL, locale="nl_NL")
         try:
-            logger.debug("self.statement (1): type: %s; contents: %s", type(self.statement), self.statement)
-
             # Python 3 needed
             stmt = super().parse()
 
-            logger.debug("stmt (2): type: %s; contents: %s", type(stmt), stmt)
-            logger.debug("self.statement (2): type: %s; contents: %s", type(self.statement), self.statement)
-
             if stmt and stmt.lines:
-                self.statement.start_date = min(sl.date for sl in stmt.lines if sl.date)
-            logger.debug("self.statement (3): type: %s; contents: %s", type(self.statement), self.statement)
+                stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
+
             stmt.assert_valid()
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
@@ -217,7 +211,7 @@ class Parser(BaseStatementParser):  # type: ignore
             assert dt is None or dt <= self.statement.end_date
             return dt
 
-        logger.debug('row: %s', str(row))
+        logger.debug('parse_record(%s)', str(row))
         assert len(row) in [5, 7, 8]
 
         stmt_line: Optional[StatementLine] = None
