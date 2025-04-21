@@ -101,8 +101,10 @@ class Parser(BaseStatementParser):  # type: ignore
 
         # 01 sep          01 sep            IDEAL BETALING, DANK U                                                                                                          1.311,73       Bij
         # 21 feb         22 feb            APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
+        # Since April 2025 (period after month):
+        # 21 mrt.        22 mrt.           APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
         statement_expr = \
-            re.compile(r'^\d\d [a-z]{3}\s+\d\d [a-z]{3}.+[0-9,.]+\s+(Af|Bij)$')
+            re.compile(r'^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij)$')
         country = re.compile("^[A-Z][A-Z]$")
 
         for line in self.fin:
@@ -198,7 +200,8 @@ class Parser(BaseStatementParser):  # type: ignore
         # GJP 2020-03-01
         # Skip transaction date (index 0) since it gives a wrong balance.
         # Use booking date (index 1) in order to get a correct balance.
-        date = get_date(row[1])
+        # Since April 2025 the month will end in a period ('.').
+        date = get_date(row[1][:-1] if row[1].endswith('.') else row[1])
 
         payee = None
         memo = None
