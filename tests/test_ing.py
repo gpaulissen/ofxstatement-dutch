@@ -11,11 +11,7 @@ from ofxstatement.plugins.nl.ing import Plugin
 
 class ParserTest(TestCase):
 
-    def test_ok(self):
-        here = os.path.dirname(__file__)
-        text_filename = os.path.join(here, 'samples', 'ing_ok.csv')
-        parser = Plugin(None, None).get_parser(text_filename)
-
+    def check(self, parser):
         # And parse csv:
         statement = parser.parse()
 
@@ -56,7 +52,7 @@ class ParserTest(TestCase):
         # "Naam / Omschrijving" is NOT prepended to "Mededelingen"
         self.assertEqual(statement.lines[2].memo,
                          "Naam: PAULISSEN G J L M Omschrijving: \
-Kosten rekening IBAN: NL81ASNB0708271685 Valutadatum: 13-12-2019")
+Kosten rekening IBAN: NL99ASNB9999999999 Valutadatum: 13-12-2019")
 
         self.assertEqual(statement.lines[3].amount, Decimal('-0.31'))
         self.assertFalse(statement.lines[3].payee)
@@ -71,6 +67,26 @@ Kosten rekening IBAN: NL81ASNB0708271685 Valutadatum: 13-12-2019")
         self.assertEqual(statement.lines[4].memo,
                          "Kosten OranjePakket, \
 25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019 #2")
+
+    def test_ok(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'ing_ok.csv')
+        self.check(Plugin(None, None).get_parser(text_filename))
+
+    def test_ok_Mutatiesoort(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'ing_ok_Mutatiesoort.csv')
+        self.check(Plugin(None, None).get_parser(text_filename))
+
+    def test_ok_Mutatiesoort_Extra(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'ing_ok_Mutatiesoort_Extra.csv')
+        self.check(Plugin(None, None).get_parser(text_filename))
+
+    def test_ok_Mutatiesoort_Extra_Unquoted(self):
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here, 'samples', 'ing_ok_Mutatiesoort_Extra_Unquoted.csv')
+        self.check(Plugin(None, None).get_parser(text_filename))
 
     @pytest.mark.xfail(raises=ParseError)
     def test_fail(self):

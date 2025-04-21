@@ -82,6 +82,14 @@ class Parser(CsvStatementParser):
     # Optional BankAccount instance
     bank_account_to = None
 
+    Notes:
+    1) https://github.com/gpaulissen/ofxstatement-dutch/issues/2
+       a) As of today (2021-02-06) there seems to be a change to the first row entries for ING-Netherlands.
+          "MutatieSoort" (two capitals) now seems "Mutatiesoort" (one capital).
+       b) ING now offers two ways to create the CSV:
+          - older version: comma separated
+          - newer version: semi-colon separated
+          The latter also creates an additional column.
     """
 
     date_format: str
@@ -95,6 +103,17 @@ class Parser(CsvStatementParser):
                                 "Af Bij",
                                 "Bedrag (EUR)",
                                 "MutatieSoort",
+                                "Mededelingen"],
+                               # https://github.com/gpaulissen/ofxstatement-dutch/issues/2
+                               # MutatieSoort => Mutatiesoort
+                               ["Datum",
+                                "Naam / Omschrijving",
+                                "Rekening",
+                                "Tegenrekening",
+                                "Code",
+                                "Af Bij",
+                                "Bedrag (EUR)",
+                                "Mutatiesoort",
                                 "Mededelingen"],
                                ["Datum",
                                 "Boeksaldo",
@@ -160,7 +179,6 @@ class Parser(CsvStatementParser):
             stmt.end_date += datetime.timedelta(days=1)
         elif self.header_idx == 1:
             stmt.start_date = stmt.start_balance = None
-
             stmt.end_date = max(sl.date for sl in stmt.lines)
             assert stmt.lines[0].date == stmt.end_date or \
                 stmt.lines[-1].date == stmt.end_date
@@ -168,16 +186,24 @@ class Parser(CsvStatementParser):
             stmt.end_balance = stmt.lines[end_idx].amount
             # end date is exclusive for OFX
             stmt.end_date += datetime.timedelta(days=1)
-
             # no transaction lines
             stmt.lines = []
 
         return stmt
 
     def split_records(self) -> Iterator[Any]:
-        """Return iterable object consisting of a line per transaction
+        """Return iterable object consisting of a line per transaction.
+
+        Solution for https://github.com/gpaulissen/ofxstatement-dutch/issues/2:
+
+        Try to determine the delimiter and so on, based on the contents (using csv.Sniffer()).
         """
-        return csv.reader(self.fin, delimiter=',')
+        try:
+            dialect = csv.Sniffer().sniff(self.fin.read(1024), delimiters=',;')
+            self.fin.seek(0)
+            return csv.reader(self.fin, dialect=dialect)
+        except Exception:
+            return csv.reader(self.fin, delimiter=',')
 
     def parse_record(self,
                      line: List[str]) -> Optional[StatementLine]:
@@ -193,25 +219,37 @@ class Parser(CsvStatementParser):
                          line)
 
             # First record(s) must be the header
+
+            # 1) https://github.com/gpaulissen/ofxstatement-dutch/issues/2
+            #    b) ING now offers two ways to create the CSV:
+            #       - older version: comma separated
+            #       - newer version: semi-colon separated
+            #       The latter also creates an additional column.
+            #
+            # The extra column will be handled by
+            # just comparing the first N header columns.
             if self.header_idx < 0:
-                if line == self.header[0]:
+                if line[0:len(self.header[0])] == self.header[0] or \
+                   line[0:len(self.header[1])] == self.header[1]:
                     self.header_idx = 0
                     self.date_format = "%Y%m%d"
-                elif line == self.header[1]:
+                elif line[0:len(self.header[-1])] == self.header[-1]:
                     self.header_idx = 1
                     self.date_format = "%Y-%m-%d"
 
-                msg: str = "Line {} does not match\n\n{}\n\nnor\n\n{}\n"
+                msg: str = "Line {} does not match\n\n{}\n\nnor\n\n{}\n\nnor\n\n{}\n"
 
                 assert self.header_idx in [0, 1], \
-                    msg.format(line, self.header[0], self.header[1])
+                    msg.format(line, self.header[0], self.header[1], self.header[2])
 
                 self.mappings = self.mappings_by_header[self.header_idx]
                 return None
 
             if self.header_idx == 0:
+                line = line[0:len(self.header[0])]  # 0 and 1 have equal length
                 stmt_line = self.parse_transaction(line)
             elif self.header_idx == 1:
+                line = line[0:len(self.header[-1])]
                 stmt_line = self.parse_balance(line)
 
         except Exception as e:
