@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-class Parser(BaseStatementParser):
+class Parser(BaseStatementParser):  # type: ignore
     unique_id_set: Set[str]
 
     def __init__(self, fin: Iterable[str]) -> None:
@@ -33,7 +33,7 @@ class Parser(BaseStatementParser):
         self.fin = fin
         self.unique_id_set = set()
 
-    def parse(self) -> Optional[Statement]:
+    def parse(self) -> Statement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -49,7 +49,8 @@ class Parser(BaseStatementParser):
             stmt = super().parse()
 
             if stmt and stmt.lines:
-                stmt.start_date = min(sl.date for sl in stmt.lines)
+                stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
+            stmt.assert_valid()
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
 
@@ -70,7 +71,8 @@ class Parser(BaseStatementParser):
         # determine amount_out
         assert isinstance(amount_in, str)
         # Amount something like 1.827,97, € 1.827,97 (both dutch) or 1,827.97?
-        m = re.search(r'^(\S+\s)?([0-9,.]+)$', amount_in)
+        # Since April 2025 it may be €1.827,97 as well
+        m = re.search(r'^(\S+\s|\D)?([0-9,.]+)$', amount_in)
         assert m is not None
         amount_out = m.group(2)
         if amount_out[-3] == ',':
@@ -97,8 +99,13 @@ class Parser(BaseStatementParser):
         balance_row = ['Vorig openstaand saldo', 'Totaal ontvangen betalingen',
                        'Totaal nieuwe uitgaven', 'Nieuw openstaand saldo']
 
+        # 01 sep          01 sep            IDEAL BETALING, DANK U                                                                                                          1.311,73       Bij
+        # 21 feb         22 feb            APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
+        # Since April 2025 (period after month):
+        # 21 mrt.        22 mrt.           APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
         statement_expr = \
-            re.compile(r'^\d\d [a-z]{3}\s+\d\d [a-z]{3}.+[0-9,.]+\s+(Af|Bij)$')
+            re.compile(r'^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij)$')
+        country = re.compile("^[A-Z][A-Z]$")
 
         for line in self.fin:
             line = line.strip()
@@ -120,10 +127,10 @@ class Parser(BaseStatementParser):
                 new_page = True
             elif new_page:
                 new_page = False
-                self.statement.end_date = row[0]  # exclusive in ICSCards
+                # exclusive in ICSCards
                 self.statement.end_date = \
-                    datetime.strptime(self.statement.end_date,
-                                      '%d %B %Y').date()
+                    datetime.strptime(row[0],
+                                      '%d %B %Y')
                 self.statement.account_id = row[1]
 
             elif row == balance_row:
@@ -136,12 +143,11 @@ class Parser(BaseStatementParser):
                                                                row[-1])
 
             elif re.search(statement_expr, line):
-                # payee (column 2), place and contry may be something like:
+                # payee, place and country may be something like:
                 #
                 # THY|2357312380512|Istanbul|US
                 #
                 # hence four columns instead of three, so combine the first two
-                country = re.compile("^[A-Z][A-Z]$")
                 for i in reversed(range(len(row))):
                     if country.match(row[i]):
                         # Should have 4 columns to the left. If not: reduce.
@@ -177,13 +183,14 @@ class Parser(BaseStatementParser):
 
         def get_date(d_m: str) -> dt:
             # Without a year it will be 1900 so add the year
+            assert self.statement.end_date and self.statement.end_date.year
             d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
             d = datetime.strptime(d_m_y, '%d %b %Y').date()
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
-            if d > self.statement.end_date:
+            if d and d > self.statement.end_date.date():
                 d = add_years(d, -1)
-            assert d <= self.statement.end_date
+            assert d is None or d <= self.statement.end_date.date()
             return d
 
         logger.debug('row: %s', str(row))
@@ -193,7 +200,8 @@ class Parser(BaseStatementParser):
         # GJP 2020-03-01
         # Skip transaction date (index 0) since it gives a wrong balance.
         # Use booking date (index 1) in order to get a correct balance.
-        date = get_date(row[1])
+        # Since April 2025 the month will end in a period ('.').
+        date = get_date(row[1][:-1] if row[1].endswith('.') else row[1])
 
         payee = None
         memo = None

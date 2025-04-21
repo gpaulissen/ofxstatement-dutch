@@ -29,7 +29,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.end_balance, Decimal('-1320.55'))
         self.assertEqual(statement.end_date,
                          datetime.strptime("2019-09-17",
-                                           parser.date_format).date())
+                                           parser.date_format))
 
         self.assertEqual(len(statement.lines), 25)
         self.assertEqual(statement.lines[0].amount, Decimal('1311.73'))
@@ -65,8 +65,7 @@ class ParserTest(TestCase):
                                            parser.date_format).date())
         self.assertEqual(statement.end_balance, Decimal('-1156.34'))
         self.assertEqual(statement.end_date,
-                         datetime.strptime("2019-01-17",
-                                           parser.date_format).date())
+                         datetime.strptime("2019-01-17", parser.date_format))
 
     def test_error(self):
         # Create and configure parser:
@@ -112,6 +111,48 @@ class ParserTest(TestCase):
         self.assertEqual(statement.lines[8].amount, Decimal('-5.05'))
         self.assertEqual(statement.lines[8].memo, 'MONTIGNY LE B (FR) #2')
         self.assertNotEqual(statement.lines[7].id, statement.lines[8].id)
+
+    def test_2025_03(self):
+        # Create and configure parser:
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here,
+                                     'samples',
+                                     'icscards-2025-03.txt')
+        parser = Plugin(None, None).get_parser(text_filename)
+
+        # And parse:
+        statement = parser.parse()
+
+        self.assertEqual(statement.currency, 'EUR')
+        self.assertEqual(statement.bank_id, "ABNANL2A")
+        self.assertEqual(statement.account_id, "99999999999")
+        self.assertEqual(statement.account_type, "CHECKING")
+        self.assertEqual(statement.start_balance, Decimal('-0.99'))
+        self.assertEqual(statement.end_balance, Decimal('-1.98'))
+
+        self.assertEqual(statement.lines[0].amount, Decimal('-0.99'))
+        self.assertEqual(statement.lines[0].memo, 'ITUNES.COM (IE)')
+
+    def test_2025_04(self):
+        # Create and configure parser:
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here,
+                                     'samples',
+                                     'icscards-2025-04.txt')
+        parser = Plugin(None, None).get_parser(text_filename)
+
+        # And parse:
+        statement = parser.parse()
+
+        self.assertEqual(statement.currency, 'EUR')
+        self.assertEqual(statement.bank_id, "ABNANL2A")
+        self.assertEqual(statement.account_id, "99999999999")
+        self.assertEqual(statement.account_type, "CHECKING")
+        self.assertEqual(statement.start_balance, Decimal('-1.98'))
+        self.assertEqual(statement.end_balance, Decimal('-2.97'))
+
+        self.assertEqual(statement.lines[0].amount, Decimal('-0.99'))
+        self.assertEqual(statement.lines[0].memo, 'ITUNES.COM (IE)')
 
     @pytest.mark.xfail(raises=AttributeError)
     def test_fail(self):

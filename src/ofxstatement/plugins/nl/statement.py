@@ -16,12 +16,12 @@ class Statement(BaseStatement):
             if len(self.lines) == 0:
                 return
             assert self.end_date, "The statement end date should be set"
-            min_date = min(sl.date for sl in self.lines)
-            max_date = max(sl.date for sl in self.lines)
-            assert self.start_date <= min_date, \
+            min_date = min(sl.date for sl in self.lines if sl.date is not None)
+            max_date = max(sl.date for sl in self.lines if sl.date is not None)
+            assert self.start_date and min_date and self.start_date <= min_date, \
                 "The statement start date ({}) should at most the smallest \
 statement line date ({})".format(self.start_date, min_date)
-            assert self.end_date > max_date, \
+            assert self.end_date and self.end_date.date() > max_date, \
                 "The statement end date ({}) should be greater than the \
 largest statement line date ({})".format(self.end_date, max_date)
         except Exception as e:
@@ -32,7 +32,7 @@ class StatementLine(BaseStatementLine):
     """Statement line data with an adjust method.
     """
     def adjust(self, unique_id_set: Set[str]) -> None:
-        if self.id:  # type: ignore
+        if self.id:
             return
 
         self.id = \

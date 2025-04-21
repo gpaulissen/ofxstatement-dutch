@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Iterator, Any
+from typing import Set, Optional, List, Iterator, Any, TextIO
 
 import csv
 import sys
@@ -108,7 +108,7 @@ Boekdatum;
     ACCOUNT = 0  # Rekeningnummer
     CD = 3  # CreditDebit
 
-    def __init__(self, fin: Iterable[str]) -> None:
+    def __init__(self, fin: TextIO) -> None:
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for KNAB Online, The Netherlands
@@ -232,7 +232,7 @@ this line's account: {}".format(self.statement.account_id,
 
             if stmt_line.bank_account_to:
                 stmt_line.bank_account_to = \
-                    BankAccount(bank_id=None,
+                    BankAccount(bank_id='',
                                 acct_id=stmt_line.bank_account_to)
         except Exception as e:
             raise ParseError(self.cur_record, str(e))

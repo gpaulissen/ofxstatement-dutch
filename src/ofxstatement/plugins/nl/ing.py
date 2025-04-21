@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Iterator, Any, Dict
+from typing import Set, Optional, List, Iterator, Any, Dict, TextIO
 
 import re
 import csv
@@ -122,7 +122,7 @@ class Parser(CsvStatementParser):
     mappings: Dict[str, int]
 
     def __init__(self,
-                 fin: Iterable[str],
+                 fin: TextIO,
                  account_id: Optional[str] = None) -> None:
         # Python 3 needed
         super().__init__(fin)
@@ -180,7 +180,7 @@ class Parser(CsvStatementParser):
         return csv.reader(self.fin, delimiter=',')
 
     def parse_record(self,
-                     line: List[Optional[str]]) -> Optional[StatementLine]:
+                     line: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object
         """
 
@@ -220,7 +220,7 @@ class Parser(CsvStatementParser):
         return stmt_line
 
     def parse_transaction(self,
-                          line: List[Optional[str]]) -> Optional[StatementLine]:
+                          line: List[str]) -> Optional[StatementLine]:
         # line[2] contains the account number
         if self.statement.account_id:
             assert self.statement.account_id == line[2], \
@@ -244,7 +244,7 @@ this line's account: {}".format(self.statement.account_id, line[2])
             line[self.mappings['memo']] =\
                 "{}, {}".format(line[self.mappings['payee']],
                                 line[self.mappings['memo']])
-            line[self.mappings['payee']] = None
+            line[self.mappings['payee']] = ''
 
         # Python 3 needed
         stmt_line: StatementLine = super().parse_record(line)
@@ -265,12 +265,12 @@ this line's account: {}".format(self.statement.account_id, line[2])
 
         if stmt_line.bank_account_to:
             stmt_line.bank_account_to = \
-                BankAccount(bank_id=None,
+                BankAccount(bank_id='',
                             acct_id=stmt_line.bank_account_to)
         return stmt_line
 
     def parse_balance(self,
-                      line: List[Optional[str]]) -> Optional[StatementLine]:
+                      line: List[str]) -> Optional[StatementLine]:
         # Python 3 needed
         stmt_line: StatementLine = super().parse_record(line)
         stmt_line.trntype = "DEBIT" if stmt_line.amount < 0 else "CREDIT"

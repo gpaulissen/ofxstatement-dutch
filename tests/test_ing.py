@@ -37,14 +37,14 @@ class ParserTest(TestCase):
         # Amount of 0 is skipped
         self.assertEqual(len(statement.lines), 5)
         self.assertEqual(statement.lines[0].amount, Decimal('-1.25'))
-        self.assertEqual(statement.lines[0].payee, None)
+        self.assertFalse(statement.lines[0].payee)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
         self.assertEqual(statement.lines[0].memo,
                          "Kosten OranjePakket met korting, \
 1 jan t/m 31 jan 2020 ING BANK N.V. Valutadatum: 13-02-2020")
 
         self.assertEqual(statement.lines[1].amount, Decimal('1.25'))
-        self.assertEqual(statement.lines[1].payee, None)
+        self.assertFalse(statement.lines[1].payee)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
         self.assertEqual(statement.lines[1].memo,
                          "Kwijtschelding, Valutadatum: 13-02-2020")
@@ -59,14 +59,14 @@ class ParserTest(TestCase):
 Kosten rekening IBAN: NL81ASNB0708271685 Valutadatum: 13-12-2019")
 
         self.assertEqual(statement.lines[3].amount, Decimal('-0.31'))
-        self.assertEqual(statement.lines[3].payee, None)
+        self.assertFalse(statement.lines[3].payee)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
         self.assertEqual(statement.lines[3].memo,
                          "Kosten OranjePakket, \
 25 nov t/m 30 nov 2019 ING BANK N.V. Valutadatum: 13-12-2019")
 
         self.assertEqual(statement.lines[4].amount, Decimal('-0.31'))
-        self.assertEqual(statement.lines[4].payee, None)
+        self.assertFalse(statement.lines[4].payee)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
         self.assertEqual(statement.lines[4].memo,
                          "Kosten OranjePakket, \

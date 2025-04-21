@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Any
+from typing import Iterable, Set, Optional, List, Any, TextIO
 import csv
 import sys
 import datetime
@@ -99,7 +99,7 @@ EUR,"13,87",
 
     unique_id_set: Set[str]
 
-    def __init__(self, fin: Iterable[str], account_id: str) -> None:
+    def __init__(self, fin: TextIO, account_id: str) -> None:
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
@@ -222,9 +222,8 @@ EUR,"13,87",
 
         return stmt_line
 
-    def parse_decimal(self, value: Optional[str]) -> Optional[Decimal]:
-        logger.debug('value: %s', value)
-        return super().parse_decimal(value) if value else None
+    def parse_decimal(self, value: str) -> Decimal:
+        return super().parse_decimal(value) if value else Decimal(0)
 
 
 class Plugin(BasePlugin):
