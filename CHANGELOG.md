@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.6.1] - 2025-04-20
+## [1.6.1] - 2025-04-21
 
 - [The new ICS PDF file differs from the previous format (March 2025 => April 2025).](https://github.com/gpaulissen/ofxstatement-dutch/issues/10)
 
