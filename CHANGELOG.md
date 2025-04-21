@@ -15,6 +15,13 @@ Types of changes:
 
 ## [Unreleased]
 
+## [1.7.0] - 2025-04-21
+
+### Fixed
+
+- [Change in ING first row entries.](https://github.com/gpaulissen/ofxstatement-dutch/issues/2)
+- [ICScards conversion fails when balance is 0.](https://github.com/gpaulissen/ofxstatement-dutch/issues/7)
+
 ## [1.6.2] - 2025-04-21
 
 ### Fixed

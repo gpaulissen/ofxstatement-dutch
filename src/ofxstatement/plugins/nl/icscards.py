@@ -64,7 +64,7 @@ class Parser(BaseStatementParser):  # type: ignore
 
         # determine sign_out
         assert isinstance(transaction_type_in, str)
-        assert transaction_type_in in ['Af', 'Bij']
+        assert transaction_type_in in ['Af', 'Bij', '  ']
 
         if transaction_type_in == 'Af':
             sign_out = -1
@@ -107,7 +107,7 @@ class Parser(BaseStatementParser):  # type: ignore
         # Since April 2025 (period after month):
         # 21 mrt.        22 mrt.           APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
         statement_expr = \
-            re.compile(r'^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij)$')
+            re.compile(r'^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij|  )$')
         country = re.compile("^[A-Z][A-Z]$")
 
         for line in self.fin:
@@ -147,6 +147,21 @@ class Parser(BaseStatementParser):  # type: ignore
                 balance = True
             elif balance:
                 balance = False
+                # Row has 4 times an amount and after each amount there may be "Af" or "Bij"
+                assert len(row) >= 4 and len(row) <= 8
+                if row[-1] not in ['Af', 'Bij']:
+                    row.append('  ')
+                if row[-3] not in ['Af', 'Bij']:
+                    row.insert(-2, '  ')
+                if row[-5] not in ['Af', 'Bij']:
+                    row.insert(-4, '  ')
+                if row[-7] not in ['Af', 'Bij']:
+                    row.insert(-6, '  ')
+                assert len(row) == 8
+                for i in range(int(len(row) / 2)):
+                    assert row[i * 2] not in ['Af', 'Bij', '  ']
+                    assert row[i * 2 + 1] in ['Af', 'Bij', '  ']
+
                 self.statement.start_balance = Parser.get_amount(row[0],
                                                                  row[1])
                 self.statement.end_balance = Parser.get_amount(row[-2],

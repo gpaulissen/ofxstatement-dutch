@@ -154,6 +154,27 @@ class ParserTest(TestCase):
         self.assertEqual(statement.lines[0].amount, Decimal('-0.99'))
         self.assertEqual(statement.lines[0].memo, 'ITUNES.COM (IE)')
 
+    def test_no_balance(self):
+        # Create and configure parser:
+        here = os.path.dirname(__file__)
+        text_filename = os.path.join(here,
+                                     'samples',
+                                     'icscards_no_balance.txt')
+        parser = Plugin(None, None).get_parser(text_filename)
+
+        # And parse:
+        statement = parser.parse()
+
+        self.assertEqual(statement.currency, 'EUR')
+        self.assertEqual(statement.bank_id, "ABNANL2A")
+        self.assertEqual(statement.account_id, "99999999999")
+        self.assertEqual(statement.account_type, "CHECKING")
+        self.assertEqual(statement.start_balance, Decimal('-13.08'))
+        self.assertEqual(statement.end_balance, Decimal('0.00'))
+
+        self.assertEqual(statement.lines[0].amount, Decimal('13.08'))
+        self.assertEqual(statement.lines[0].memo, 'IDEAL BETALING, DANK U')
+
     @pytest.mark.xfail(raises=AttributeError)
     def test_fail(self):
         """'Parser' object has no attribute 'bank_id'
