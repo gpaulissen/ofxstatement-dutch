@@ -25,7 +25,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.start_balance, Decimal('-1311.73'))
         self.assertEqual(statement.start_date,
                          datetime.strptime("2019-08-21",
-                                           parser.date_format).date())
+                                           parser.date_format))
         self.assertEqual(statement.end_balance, Decimal('-1320.55'))
         self.assertEqual(statement.end_date,
                          datetime.strptime("2019-09-17",
@@ -35,7 +35,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.lines[0].amount, Decimal('1311.73'))
         self.assertEqual(statement.lines[1].date,
                          datetime.strptime("2019-08-21",
-                                           parser.date_format).date())
+                                           parser.date_format))
         self.assertEqual(statement.lines[1].amount, Decimal('-7.99'))
         self.assertEqual(statement.lines[12].payee, "HOTEL MERCURE")
         self.assertEqual(statement.lines[12].memo, "MONTIGNY LE B (FR)")
@@ -62,7 +62,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.start_balance, Decimal('-893.31'))
         self.assertEqual(statement.start_date,
                          datetime.strptime("2018-12-21",
-                                           parser.date_format).date())
+                                           parser.date_format))
         self.assertEqual(statement.end_balance, Decimal('-1156.34'))
         self.assertEqual(statement.end_date,
                          datetime.strptime("2019-01-17", parser.date_format))

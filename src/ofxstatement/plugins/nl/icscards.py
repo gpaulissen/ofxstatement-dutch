@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Iterator, Any
+from typing import Iterable, Set, Optional, List, Iterator, Any, Union
 
 import sys
 import locale
 import re
 import io
 from decimal import Decimal
-from datetime import datetime, date as dt
+from datetime import datetime
 from subprocess import check_output, CalledProcessError
 import logging
 
@@ -39,17 +39,24 @@ class Parser(BaseStatementParser):  # type: ignore
         super() implementation will call to split_records and parse_record to
         process the file.
         """
+        logger.debug("self before: type: %s; contents: %s", type(self), self)
         stmt: Optional[Statement] = None
         # Save locale
         current_locale = locale.setlocale(category=locale.LC_ALL)
         # Need to parse "05 mei" i.e. "05 may"
         locale.setlocale(category=locale.LC_ALL, locale="nl_NL")
         try:
+            logger.debug("self.statement (1): type: %s; contents: %s", type(self.statement), self.statement)
+
             # Python 3 needed
             stmt = super().parse()
 
+            logger.debug("stmt (2): type: %s; contents: %s", type(stmt), stmt)
+            logger.debug("self.statement (2): type: %s; contents: %s", type(self.statement), self.statement)
+
             if stmt and stmt.lines:
-                stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
+                self.statement.start_date = min(sl.date for sl in stmt.lines if sl.date)
+            logger.debug("self.statement (3): type: %s; contents: %s", type(self.statement), self.statement)
             stmt.assert_valid()
         finally:
             locale.setlocale(category=locale.LC_ALL, locale=current_locale)
@@ -59,7 +66,7 @@ class Parser(BaseStatementParser):  # type: ignore
     @staticmethod
     def get_amount(amount_in: str, transaction_type_in: str) -> Decimal:
         sign_out: int = 1
-        amount_out: Any
+        amount_out: Union[str, Decimal]
 
         # determine sign_out
         assert isinstance(transaction_type_in, str)
@@ -79,7 +86,9 @@ class Parser(BaseStatementParser):  # type: ignore
             amount_out = amount_out.replace('.', '').replace(',', '.')
 
         # convert to str to keep just the last two decimals
-        return sign_out * Decimal(str(amount_out))
+        amount_out = sign_out * Decimal(str(amount_out))
+        logger.debug("get_amount(%s, %s) = %s", amount_in, transaction_type_in, amount_out)
+        return amount_out
 
     def split_records(self) -> Iterator[Any]:
         """Return iterable object consisting of a line per transaction
@@ -114,6 +123,13 @@ class Parser(BaseStatementParser):  # type: ignore
 
             # to ease the parsing pain
             row: List[str] = convert_str_to_list(line)
+
+            logger.debug('row: %s', row)
+            logger.debug("before parsing line: self.statement: %s; first_line: %s; new_page: %s; balance: %s",
+                         self.statement,
+                         first_line,
+                         new_page,
+                         balance)
 
             if first_line and len(row) > 1:
                 assert row == first_line_row, \
@@ -164,34 +180,42 @@ class Parser(BaseStatementParser):  # type: ignore
 
                     row.insert(2, row[2][0:25])
                     row[3] = row[3][25:]
+                logger.debug('yield row: %s', row)
                 yield row
+            logger.debug("after parsing line : self.statement: %s; first_line: %s; new_page: %s; balance: %s",
+                         self.statement,
+                         first_line,
+                         new_page,
+                         balance)
 
     def parse_record(self, row: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object
         """
 
-        def add_years(d: dt, years: int) -> dt:
+        def add_years(dt: datetime, years: int) -> datetime:
             """Return a date that's `years` years after the date (or datetime)
             object `d`. Return the same calendar date (month and day) in the
             destination year, if it exists, otherwise use the following day
             (thus changing February 29 to March 1).
 
             """
-            return d.replace(year=d.year + years, month=3, day=1) \
-                if d.month == 2 and d.day == 29 \
-                else d.replace(year=d.year + years)
+            result: datetime = dt.replace(year=dt.year + years, month=3, day=1) \
+                if dt.month == 2 and dt.day == 29 \
+                else dt.replace(year=dt.year + years)
+            logger.debug("add_years(%s, %d) = %s", dt, years, result)
+            return result
 
-        def get_date(d_m: str) -> dt:
+        def get_date(d_m: str) -> Optional[datetime]:
             # Without a year it will be 1900 so add the year
             assert self.statement.end_date and self.statement.end_date.year
             d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
-            d = datetime.strptime(d_m_y, '%d %b %Y').date()
+            dt: Optional[datetime] = datetime.strptime(d_m_y, '%d %b %Y')
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
-            if d and d > self.statement.end_date.date():
-                d = add_years(d, -1)
-            assert d is None or d <= self.statement.end_date.date()
-            return d
+            if dt and dt > self.statement.end_date:
+                dt = add_years(dt, -1)
+            assert dt is None or dt <= self.statement.end_date
+            return dt
 
         logger.debug('row: %s', str(row))
         assert len(row) in [5, 7, 8]
@@ -224,6 +248,7 @@ class Parser(BaseStatementParser):  # type: ignore
             stmt_line.payee = payee
             stmt_line.adjust(self.unique_id_set)
 
+        logger.debug('stmt_line: %s', stmt_line)
         return stmt_line
 
 
