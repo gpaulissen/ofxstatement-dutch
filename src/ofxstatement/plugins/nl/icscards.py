@@ -218,7 +218,13 @@ class Parser(BaseStatementParser):  # type: ignore
             # Without a year it will be 1900 so add the year
             assert self.statement.end_date and self.statement.end_date.year
             d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
-            dt: Optional[datetime] = datetime.strptime(d_m_y, '%d %b %Y')
+            format = '%d %b %Y'
+            try:
+                dt: Optional[datetime] = datetime.strptime(d_m_y, format)
+            except ValueError as e:
+                current_locale = locale.setlocale(category=locale.LC_ALL)
+                logger.error("Could not parse %s against format %s with locale %s", d_m_y, format, current_locale)
+                raise e
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
             if dt and dt > self.statement.end_date:
