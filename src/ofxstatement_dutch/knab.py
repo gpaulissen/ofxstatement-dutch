@@ -9,7 +9,11 @@ import logging
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError, ValidationError
-from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine
+from ofxstatement.statement import (
+    BankAccount,
+    Statement as BaseStatement,
+    StatementLine,
+)
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
@@ -91,15 +95,15 @@ Boekdatum;
     # 0-based
     mappings = {
         # id (determined later)
-        'date': 15,  # Boekdatum
-        'memo': 9,  # Omschrijving
-        'amount': 4,  # Bedrag
-        'payee': 6,  # Tegenrekeninghouder
-        'date_user': 1,  # Transactiedatum
+        "date": 15,  # Boekdatum
+        "memo": 9,  # Omschrijving
+        "amount": 4,  # Bedrag
+        "payee": 6,  # Tegenrekeninghouder
+        "date_user": 1,  # Transactiedatum
         # check_no
-        'refnum': 14,  # Referentie
+        "refnum": 14,  # Referentie
         # trntype (determined later)
-        'bank_account_to': 5,  # Tegenrekeningnummer
+        "bank_account_to": 5,  # Tegenrekeningnummer
     }
 
     unique_id_set: Set[str]
@@ -112,27 +116,31 @@ Boekdatum;
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for KNAB Online, The Netherlands
-        self.statement = Statement(bank_id="KNABNL2H",
-                                   account_id=None,
-                                   currency="EUR")  # My Statement
+        self.statement = Statement(
+            bank_id="KNABNL2H", account_id=None, currency="EUR"
+        )  # My Statement
         self.unique_id_set = set()
-        self.header = [['KNAB EXPORT'],
-                       ['Rekeningnummer',
-                        'Transactiedatum',
-                        'Valutacode',
-                        'CreditDebet',
-                        'Bedrag',
-                        'Tegenrekeningnummer',
-                        'Tegenrekeninghouder',
-                        'Valutadatum',
-                        'Betaalwijze',
-                        'Omschrijving',
-                        'Type betaling',
-                        'Machtigingsnummer',
-                        'Incassant ID',
-                        'Adres',
-                        'Referentie',
-                        'Boekdatum']]
+        self.header = [
+            ["KNAB EXPORT"],
+            [
+                "Rekeningnummer",
+                "Transactiedatum",
+                "Valutacode",
+                "CreditDebet",
+                "Bedrag",
+                "Tegenrekeningnummer",
+                "Tegenrekeninghouder",
+                "Valutadatum",
+                "Betaalwijze",
+                "Omschrijving",
+                "Type betaling",
+                "Machtigingsnummer",
+                "Incassant ID",
+                "Adres",
+                "Referentie",
+                "Boekdatum",
+            ],
+        ]
 
     def parse(self) -> BaseStatement:
         """Main entry point for parsers
@@ -145,8 +153,9 @@ Boekdatum;
         stmt: BaseStatement = super().parse()
 
         try:
-            assert len(self.header) == 0, \
-                "Header not completely read: {}".format(str(self.header))
+            assert len(self.header) == 0, "Header not completely read: {}".format(
+                str(self.header)
+            )
         except Exception as e:
             raise ParseError(0, str(e))
 
@@ -171,51 +180,49 @@ Boekdatum;
         return stmt
 
     def split_records(self) -> Iterator[Any]:
-        """Return iterable object consisting of a line per transaction
-        """
-        return csv.reader(self.fin, delimiter=';')
+        """Return iterable object consisting of a line per transaction"""
+        return csv.reader(self.fin, delimiter=";")
 
     def parse_record(self, line: List[str]) -> Optional[StatementLine]:
-        """Parse given transaction line and return StatementLine object
-        """
+        """Parse given transaction line and return StatementLine object"""
 
         try:
-            logger.debug('header count: %d; line #%d: %s',
-                         len(self.header),
-                         self.cur_record,
-                         line)
+            logger.debug(
+                "header count: %d; line #%d: %s",
+                len(self.header),
+                self.cur_record,
+                line,
+            )
 
             # First record(s) must be the header
             if len(self.header) >= 1:
                 # Remove it since it need not be checked anymore
                 hdr = self.header.pop(0)
                 line = list(filter(None, line))
-                logger.debug('header: %s', hdr)
-                assert line == hdr, \
-                    "Expected: {}\ngot: {}".format(hdr, line)
+                logger.debug("header: %s", hdr)
+                assert line == hdr, "Expected: {}\ngot: {}".format(hdr, line)
                 return None
 
             # line[self.ACCOUNT] contains the account number
             if self.statement.account_id:
-                assert self.statement.account_id == \
-                    line[self.ACCOUNT], \
+                assert self.statement.account_id == line[self.ACCOUNT], (
                     "Only one account is allowed; previous account: {}, \
-this line's account: {}".format(self.statement.account_id,
-                                line[self.ACCOUNT])
+this line's account: {}".format(self.statement.account_id, line[self.ACCOUNT])
+                )
             else:
                 self.statement.account_id = line[self.ACCOUNT]
 
-            assert line[self.CD] in ['D', 'C'], \
+            assert line[self.CD] in ["D", "C"], (
                 "Element {} is not D/C in line {}".format(self.CD, str(line))
+            )
 
-            if line[self.CD] == 'D':
-                line[self.mappings['amount']] =\
-                    '-' + line[self.mappings['amount']]
+            if line[self.CD] == "D":
+                line[self.mappings["amount"]] = "-" + line[self.mappings["amount"]]
 
-            if line[self.mappings['bank_account_to']]:
-                line[self.mappings['payee']] =\
-                    "{} ({})".format(line[self.mappings['payee']],
-                                     line[self.mappings['bank_account_to']])
+            if line[self.mappings["bank_account_to"]]:
+                line[self.mappings["payee"]] = "{} ({})".format(
+                    line[self.mappings["payee"]], line[self.mappings["bank_account_to"]]
+                )
 
             # Python 3 needed
             stmt_line: Optional[StatementLine] = super().parse_record(line)
@@ -235,9 +242,9 @@ this line's account: {}".format(self.statement.account_id,
                 stmt_line.trntype = "CREDIT"
 
             if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
-                stmt_line.bank_account_to = \
-                    BankAccount(bank_id='',
-                                acct_id=stmt_line.bank_account_to)
+                stmt_line.bank_account_to = BankAccount(
+                    bank_id="", acct_id=stmt_line.bank_account_to
+                )
         except Exception as e:
             raise ParseError(self.cur_record, str(e))
 
@@ -245,8 +252,8 @@ this line's account: {}".format(self.statement.account_id,
 
 
 class Plugin(BasePlugin):
-    """KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)
-    """
+    """KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)"""
+
     def get_parser(self, f: str) -> Parser:
         fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
         return Parser(fin)

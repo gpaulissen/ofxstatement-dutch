@@ -88,9 +88,9 @@ EUR,"13,87",
     # 0-based
     mappings = {
         # id (determined later)
-        'date': 0,
-        'memo': 5,
-        'amount': 8,  # Without a header
+        "date": 0,
+        "memo": 5,
+        "amount": 8,  # Without a header
         # payee
         # date_user
         # check_no
@@ -105,25 +105,31 @@ EUR,"13,87",
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement = Statement(bank_id="STDGNL21",
-                                   account_id=account_id,
-                                   currency="EUR",
-                                   # Not yet, just a CHECKING account
-                                   # self.statement.account_type = "MONEYMRKT"
-                                   account_type="CHECKING")  # My Statement
+        self.statement = Statement(
+            bank_id="STDGNL21",
+            account_id=account_id,
+            currency="EUR",
+            # Not yet, just a CHECKING account
+            # self.statement.account_type = "MONEYMRKT"
+            account_type="CHECKING",
+        )  # My Statement
         self.unique_id_set = set()
-        self.header = [["Datum",
-                        "Tijd",
-                        "Valutadatum",
-                        "Product",
-                        "ISIN",
-                        "Omschrijving",
-                        "FX",
-                        "Mutatie",
-                        "",
-                        "Saldo",
-                        "",
-                        "Order Id"]]
+        self.header = [
+            [
+                "Datum",
+                "Tijd",
+                "Valutadatum",
+                "Product",
+                "ISIN",
+                "Omschrijving",
+                "FX",
+                "Mutatie",
+                "",
+                "Saldo",
+                "",
+                "Order Id",
+            ]
+        ]
 
     def parse(self) -> BaseStatement:
         """Main entry point for parsers
@@ -136,8 +142,9 @@ EUR,"13,87",
         stmt: BaseStatement = super().parse()
 
         try:
-            assert len(self.header) == 0, \
-                "Header not completely read: {}".format(str(self.header))
+            assert len(self.header) == 0, "Header not completely read: {}".format(
+                str(self.header)
+            )
         except Exception as e:
             raise ParseError(0, str(e))
 
@@ -151,31 +158,27 @@ EUR,"13,87",
             stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
             stmt.end_date += datetime.timedelta(days=1)
 
-        logger.debug('stmt: %r', stmt)
+        logger.debug("stmt: %r", stmt)
 
         return stmt
 
     def split_records(self) -> Iterable[Any]:
-        """Return iterable object consisting of a line per transaction
-        """
-        return csv.reader(self.fin, delimiter=',')
+        """Return iterable object consisting of a line per transaction"""
+        return csv.reader(self.fin, delimiter=",")
 
     def parse_record(self, line: List[str]) -> Optional[StatementLine]:
-        """Parse given transaction line and return StatementLine object
-        """
+        """Parse given transaction line and return StatementLine object"""
 
-        logger.debug('header count: %d; line #%d: %s',
-                     len(self.header),
-                     self.cur_record,
-                     line)
+        logger.debug(
+            "header count: %d; line #%d: %s", len(self.header), self.cur_record, line
+        )
 
         # First record(s) must be the header
         if len(self.header) >= 1:
             # Remove it since it need not be checked anymore
             hdr = self.header.pop(0)
-            logger.debug('header: %s', hdr)
-            assert line == hdr, \
-                "Expected: {}\ngot: {}".format(hdr, line)
+            logger.debug("header: %s", hdr)
+            assert line == hdr, "Expected: {}\ngot: {}".format(hdr, line)
             return None
 
         # Python 3 needed
@@ -186,20 +189,20 @@ EUR,"13,87",
             return None
 
         # Forget conversions
-        if line[self.mappings['amount'] - 1] != 'EUR':
+        if line[self.mappings["amount"] - 1] != "EUR":
             return None
 
-        if stmt_line.memo in ['Dividend', 'Dividendbelasting']:
+        if stmt_line.memo in ["Dividend", "Dividendbelasting"]:
             stmt_line.trntype = "DIV"
-        elif stmt_line.memo == 'Rente':
+        elif stmt_line.memo == "Rente":
             stmt_line.trntype = "INT"
-        elif stmt_line.memo == 'DEGIRO transactiekosten':
+        elif stmt_line.memo == "DEGIRO transactiekosten":
             stmt_line.trntype = "FEE"
-        elif stmt_line.memo and stmt_line.memo[0:25] == 'DEGIRO Aansluitingskosten':
+        elif stmt_line.memo and stmt_line.memo[0:25] == "DEGIRO Aansluitingskosten":
             stmt_line.trntype = "SRVCHG"
-        elif stmt_line.memo == 'Terugstorting':
+        elif stmt_line.memo == "Terugstorting":
             stmt_line.trntype = "XFER"
-        elif stmt_line.memo in ['Storting', 'iDEAL storting', 'iDEAL Deposit']:
+        elif stmt_line.memo in ["Storting", "iDEAL storting", "iDEAL Deposit"]:
             stmt_line.trntype = "DEP"
         elif stmt_line.amount < 0:  # pragma: no cover
             stmt_line.trntype = "DEBIT"
@@ -212,13 +215,12 @@ EUR,"13,87",
         adjust_statement_line(stmt_line, self.unique_id_set)
 
         # Product known?
-        if line[self.mappings['memo'] - 2]:  # pragma: no cover
+        if line[self.mappings["memo"] - 2]:  # pragma: no cover
             if stmt_line.memo:
-                stmt_line.memo += ' ' + line[self.mappings['memo'] - 2]
+                stmt_line.memo += " " + line[self.mappings["memo"] - 2]
                 # ISIN known?
-                if line[self.mappings['memo'] - 1]:
-                    stmt_line.memo +=\
-                        ' (' + line[self.mappings['memo'] - 1] + ')'
+                if line[self.mappings["memo"] - 1]:
+                    stmt_line.memo += " (" + line[self.mappings["memo"] - 1] + ")"
 
         return stmt_line
 
@@ -227,12 +229,12 @@ EUR,"13,87",
 
 
 class Plugin(BasePlugin):
-    """DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)
-    """
+    """DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)"""
+
     def get_parser(self, f: str) -> Parser:
         fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
         try:
-            account_id = self.settings['account_id']
+            account_id = self.settings["account_id"]
         except Exception:
             raise RuntimeError("""
 Please define an 'account_id' in the ofxstatement configuration.

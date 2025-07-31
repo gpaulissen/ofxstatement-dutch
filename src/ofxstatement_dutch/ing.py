@@ -10,7 +10,11 @@ import logging
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine
+from ofxstatement.statement import (
+    BankAccount,
+    Statement as BaseStatement,
+    StatementLine,
+)
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
@@ -95,60 +99,65 @@ class Parser(CsvStatementParser):
     date_format: str
 
     # transactions / balance
-    header: List[List[str]] = [["Datum",
-                                "Naam / Omschrijving",
-                                "Rekening",
-                                "Tegenrekening",
-                                "Code",
-                                "Af Bij",
-                                "Bedrag (EUR)",
-                                "MutatieSoort",
-                                "Mededelingen"],
-                               # https://github.com/gpaulissen/ofxstatement-dutch/issues/2
-                               # MutatieSoort => Mutatiesoort
-                               ["Datum",
-                                "Naam / Omschrijving",
-                                "Rekening",
-                                "Tegenrekening",
-                                "Code",
-                                "Af Bij",
-                                "Bedrag (EUR)",
-                                "Mutatiesoort",
-                                "Mededelingen"],
-                               ["Datum",
-                                "Boeksaldo",
-                                "Valutair saldo"]]
+    header: List[List[str]] = [
+        [
+            "Datum",
+            "Naam / Omschrijving",
+            "Rekening",
+            "Tegenrekening",
+            "Code",
+            "Af Bij",
+            "Bedrag (EUR)",
+            "MutatieSoort",
+            "Mededelingen",
+        ],
+        # https://github.com/gpaulissen/ofxstatement-dutch/issues/2
+        # MutatieSoort => Mutatiesoort
+        [
+            "Datum",
+            "Naam / Omschrijving",
+            "Rekening",
+            "Tegenrekening",
+            "Code",
+            "Af Bij",
+            "Bedrag (EUR)",
+            "Mutatiesoort",
+            "Mededelingen",
+        ],
+        ["Datum", "Boeksaldo", "Valutair saldo"],
+    ]
     # 0-based
-    mappings_by_header: List[Dict[str, int]] = [{
-        # id (determined later)
-        'date': 0,
-        'memo': 8,
-        'amount': 6,
-        'payee': 1,  # if bank_account_to is filled
-        # date_user
-        # check_no
-        # refnum
-        # trntype (determined later)
-        'bank_account_to': 3,
-    }, {
-        'date': 0,
-        'amount': 2  # valutair
-    }]
+    mappings_by_header: List[Dict[str, int]] = [
+        {
+            # id (determined later)
+            "date": 0,
+            "memo": 8,
+            "amount": 6,
+            "payee": 1,  # if bank_account_to is filled
+            # date_user
+            # check_no
+            # refnum
+            # trntype (determined later)
+            "bank_account_to": 3,
+        },
+        {
+            "date": 0,
+            "amount": 2,  # valutair
+        },
+    ]
 
     # variables
     unique_id_set: Set[str]
     header_idx: int
     mappings: Dict[str, int]
 
-    def __init__(self,
-                 fin: TextIO,
-                 account_id: Optional[str] = None) -> None:
+    def __init__(self, fin: TextIO, account_id: Optional[str] = None) -> None:
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement = Statement(bank_id="INGBNL2A",
-                                   account_id=account_id,
-                                   currency="EUR")  # My Statement
+        self.statement = Statement(
+            bank_id="INGBNL2A", account_id=account_id, currency="EUR"
+        )  # My Statement
         self.unique_id_set = set()
         self.header_idx = -1
 
@@ -163,10 +172,11 @@ class Parser(CsvStatementParser):
         stmt: Optional[BaseStatement] = super().parse()
 
         assert stmt is not None
-        
+
         try:
-            assert self.header_idx >= 0 and self.header_idx < len(self.header), \
+            assert self.header_idx >= 0 and self.header_idx < len(self.header), (
                 "Header not read: {}".format(str(self.header))
+            )
         except Exception as e:
             raise ParseError(0, str(e))
 
@@ -182,8 +192,10 @@ class Parser(CsvStatementParser):
         elif self.header_idx == 1:
             stmt.start_date = stmt.start_balance = None
             stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
-            assert stmt.lines[0].date == stmt.end_date or \
-                stmt.lines[-1].date == stmt.end_date
+            assert (
+                stmt.lines[0].date == stmt.end_date
+                or stmt.lines[-1].date == stmt.end_date
+            )
             end_idx: int = 0 if stmt.lines[0].date == stmt.end_date else -1
             stmt.end_balance = stmt.lines[end_idx].amount
             # end date is exclusive for OFX
@@ -201,24 +213,21 @@ class Parser(CsvStatementParser):
         Try to determine the delimiter and so on, based on the contents (using csv.Sniffer()).
         """
         try:
-            dialect = csv.Sniffer().sniff(self.fin.read(1024), delimiters=',;')
+            dialect = csv.Sniffer().sniff(self.fin.read(1024), delimiters=",;")
             self.fin.seek(0)
             return csv.reader(self.fin, dialect=dialect)
         except Exception:
-            return csv.reader(self.fin, delimiter=',')
+            return csv.reader(self.fin, delimiter=",")
 
-    def parse_record(self,
-                     line: List[str]) -> Optional[StatementLine]:
-        """Parse given transaction line and return StatementLine object
-        """
+    def parse_record(self, line: List[str]) -> Optional[StatementLine]:
+        """Parse given transaction line and return StatementLine object"""
 
         stmt_line: Optional[StatementLine] = None
 
         try:
-            logger.debug('header idx: %d; line #%d: %s',
-                         self.header_idx,
-                         self.cur_record,
-                         line)
+            logger.debug(
+                "header idx: %d; line #%d: %s", self.header_idx, self.cur_record, line
+            )
 
             # First record(s) must be the header
 
@@ -231,27 +240,30 @@ class Parser(CsvStatementParser):
             # The extra column will be handled by
             # just comparing the first N header columns.
             if self.header_idx < 0:
-                if line[0:len(self.header[0])] == self.header[0] or \
-                   line[0:len(self.header[1])] == self.header[1]:
+                if (
+                    line[0 : len(self.header[0])] == self.header[0]
+                    or line[0 : len(self.header[1])] == self.header[1]
+                ):
                     self.header_idx = 0
                     self.date_format = "%Y%m%d"
-                elif line[0:len(self.header[-1])] == self.header[-1]:
+                elif line[0 : len(self.header[-1])] == self.header[-1]:
                     self.header_idx = 1
                     self.date_format = "%Y-%m-%d"
 
                 msg: str = "Line {} does not match\n\n{}\n\nnor\n\n{}\n\nnor\n\n{}\n"
 
-                assert self.header_idx in [0, 1], \
-                    msg.format(line, self.header[0], self.header[1], self.header[2])
+                assert self.header_idx in [0, 1], msg.format(
+                    line, self.header[0], self.header[1], self.header[2]
+                )
 
                 self.mappings = self.mappings_by_header[self.header_idx]
                 return None
 
             if self.header_idx == 0:
-                line = line[0:len(self.header[0])]  # 0 and 1 have equal length
+                line = line[0 : len(self.header[0])]  # 0 and 1 have equal length
                 stmt_line = self.parse_transaction(line)
             elif self.header_idx == 1:
-                line = line[0:len(self.header[-1])]
+                line = line[0 : len(self.header[-1])]
                 stmt_line = self.parse_balance(line)
 
         except Exception as e:
@@ -259,32 +271,33 @@ class Parser(CsvStatementParser):
 
         return stmt_line
 
-    def parse_transaction(self,
-                          line: List[str]) -> Optional[StatementLine]:
+    def parse_transaction(self, line: List[str]) -> Optional[StatementLine]:
         # line[2] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[2], \
+            assert self.statement.account_id == line[2], (
                 "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id, line[2])
+            )
         else:
             self.statement.account_id = line[2]
 
-        assert line[5] in ['Af', 'Bij']
+        assert line[5] in ["Af", "Bij"]
 
-        if line[5] == 'Af':
-            amount: Optional[str] = line[self.mappings['amount']]
-            line[self.mappings['amount']] =\
-                '-' + (amount if isinstance(amount, str) else '')
+        if line[5] == "Af":
+            amount: Optional[str] = line[self.mappings["amount"]]
+            line[self.mappings["amount"]] = "-" + (
+                amount if isinstance(amount, str) else ""
+            )
 
-        if line[self.mappings['bank_account_to']]:
-            line[self.mappings['payee']] =\
-                "{} ({})".format(line[self.mappings['payee']],
-                                 line[self.mappings['bank_account_to']])
+        if line[self.mappings["bank_account_to"]]:
+            line[self.mappings["payee"]] = "{} ({})".format(
+                line[self.mappings["payee"]], line[self.mappings["bank_account_to"]]
+            )
         else:
-            line[self.mappings['memo']] =\
-                "{}, {}".format(line[self.mappings['payee']],
-                                line[self.mappings['memo']])
-            line[self.mappings['payee']] = ''
+            line[self.mappings["memo"]] = "{}, {}".format(
+                line[self.mappings["payee"]], line[self.mappings["memo"]]
+            )
+            line[self.mappings["payee"]] = ""
 
         # Python 3 needed
         stmt_line: Optional[StatementLine] = super().parse_record(line)
@@ -301,30 +314,31 @@ this line's account: {}".format(self.statement.account_id, line[2])
             stmt_line.trntype = "CREDIT"
 
         if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
-            stmt_line.bank_account_to = \
-                BankAccount(bank_id='',
-                            acct_id=stmt_line.bank_account_to)
+            stmt_line.bank_account_to = BankAccount(
+                bank_id="", acct_id=stmt_line.bank_account_to
+            )
 
         return stmt_line
 
-    def parse_balance(self,
-                      line: List[str]) -> Optional[StatementLine]:
+    def parse_balance(self, line: List[str]) -> Optional[StatementLine]:
         # Python 3 needed
         stmt_line: Optional[StatementLine] = super().parse_record(line)
 
         assert stmt_line is not None
-        
-        stmt_line.trntype = "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
+
+        stmt_line.trntype = (
+            "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
+        )
         stmt_line.id = "1"
         adjust_statement_line(stmt_line, self.unique_id_set)
         return stmt_line
 
 
 class Plugin(BasePlugin):
-    """ING Bank, The Netherlands, CSV (https://www.ing.nl/)
-    """
+    """ING Bank, The Netherlands, CSV (https://www.ing.nl/)"""
+
     def get_parser(self, filename: str) -> Parser:
-        p = re.compile('(NL\\d+INGB\\d+)')
+        p = re.compile("(NL\\d+INGB\\d+)")
         m = p.search(filename)
         account_id: Optional[str] = None
         if m:

@@ -11,7 +11,11 @@ from decimal import Decimal
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine
+from ofxstatement.statement import (
+    BankAccount,
+    Statement as BaseStatement,
+    StatementLine,
+)
 
 from ofxstatement_dutch.statement import Statement
 
@@ -157,26 +161,24 @@ class Parser(CsvStatementParser):
     # 0-based
     mappings: Dict[str, int] = {
         # id (determined later)
-        'date': 11,
-        'memo': 17,
-        'amount': 10,
-        'payee': 3,  # if bank_account_to is filled
-        'date_user': 0,
+        "date": 11,
+        "memo": 17,
+        "amount": 10,
+        "payee": 3,  # if bank_account_to is filled
+        "date_user": 0,
         # check_no
         # refnum
         # trntype (determined later)
-        'bank_account_to': 2,
+        "bank_account_to": 2,
     }
 
-    def __init__(self,
-                 fin: TextIO,
-                 account_id: Optional[str] = None) -> None:
+    def __init__(self, fin: TextIO, account_id: Optional[str] = None) -> None:
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ASN Bank
-        self.statement = Statement(bank_id="ASNBNL21",
-                                   account_id=account_id,
-                                   currency="EUR")  # My Statement
+        self.statement = Statement(
+            bank_id="ASNBNL21", account_id=account_id, currency="EUR"
+        )  # My Statement
 
     def parse(self) -> BaseStatement:
         """Main entry point for parsers
@@ -198,27 +200,24 @@ class Parser(CsvStatementParser):
             if stmt.end_date:
                 stmt.end_date += datetime.timedelta(days=1)
             Statement.start_balance = getattr(stmt.lines[0], "start_balance")
-            Statement.end_balance = getattr(stmt.lines[-1], "start_balance") + stmt.lines[-1].amount
+            Statement.end_balance = (
+                getattr(stmt.lines[-1], "start_balance") + stmt.lines[-1].amount
+            )
 
         return stmt
 
     def split_records(self) -> Iterator[Any]:
-        """Return iterable object consisting of a line per transaction
-        """
+        """Return iterable object consisting of a line per transaction"""
         # strip quotes around memo
-        return csv.reader(self.fin, delimiter=',', quotechar="'")
+        return csv.reader(self.fin, delimiter=",", quotechar="'")
 
-    def parse_record(self,
-                     line: List[str]) -> Optional[StatementLine]:
-        """Parse given transaction line and return StatementLine object
-        """
+    def parse_record(self, line: List[str]) -> Optional[StatementLine]:
+        """Parse given transaction line and return StatementLine object"""
 
         stmt_line: Optional[StatementLine]
 
         try:
-            logger.debug('line #%d: %s',
-                         self.cur_record,
-                         line)
+            logger.debug("line #%d: %s", self.cur_record, line)
 
             stmt_line = self.parse_transaction(line)
 
@@ -227,25 +226,25 @@ class Parser(CsvStatementParser):
 
         return stmt_line
 
-    def parse_transaction(self,
-                          line: List[str]) -> Optional[StatementLine]:
+    def parse_transaction(self, line: List[str]) -> Optional[StatementLine]:
         start_balance: int = 8
         transaction_nr: int = 15
 
         # line[1] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[1], \
+            assert self.statement.account_id == line[1], (
                 "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id, line[1])
+            )
         else:
             self.statement.account_id = line[1]
 
-        if line[self.mappings['bank_account_to']]:
-            line[self.mappings['payee']] =\
-                "{} ({})".format(line[self.mappings['payee']],
-                                 line[self.mappings['bank_account_to']])
+        if line[self.mappings["bank_account_to"]]:
+            line[self.mappings["payee"]] = "{} ({})".format(
+                line[self.mappings["payee"]], line[self.mappings["bank_account_to"]]
+            )
         else:
-            line[self.mappings['payee']] = ''
+            line[self.mappings["payee"]] = ""
 
         # Python 3 needed
         stmt_line: Optional[StatementLine] = super().parse_record(line)
@@ -256,18 +255,23 @@ this line's account: {}".format(self.statement.account_id, line[1])
 
         # The unique id is a combination of 'Journaaldatum' and 'Volgnummer transactie'
         # Let id be <Journaaldatum in yyyymmdd format>.<Volgnummer transactie>
-        assert self.mappings['date'] == 11  # Journaaldatum
+        assert self.mappings["date"] == 11  # Journaaldatum
         assert transaction_nr == 15  # Volgnummer transactie
 
-        assert line[self.mappings['date']]
-        dd_mm_yyyy: str = str(line[self.mappings['date']])
-        stmt_line.id = "{}{}{}.{}".format(dd_mm_yyyy[6:],
-                                          dd_mm_yyyy[3:5],
-                                          dd_mm_yyyy[0:2],
-                                          line[transaction_nr])
+        assert line[self.mappings["date"]]
+        dd_mm_yyyy: str = str(line[self.mappings["date"]])
+        stmt_line.id = "{}{}{}.{}".format(
+            dd_mm_yyyy[6:], dd_mm_yyyy[3:5], dd_mm_yyyy[0:2], line[transaction_nr]
+        )
 
         # We can not use stmt_line.start_balance since that does not exist
-        setattr(stmt_line, "start_balance", Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0))
+        setattr(
+            stmt_line,
+            "start_balance",
+            Decimal(str(line[start_balance]))
+            if line[start_balance] is not None
+            else Decimal(0),
+        )
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"
@@ -275,9 +279,9 @@ this line's account: {}".format(self.statement.account_id, line[1])
             stmt_line.trntype = "CREDIT"
 
         if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
-            stmt_line.bank_account_to = \
-                BankAccount(bank_id='',
-                            acct_id=stmt_line.bank_account_to)
+            stmt_line.bank_account_to = BankAccount(
+                bank_id="", acct_id=stmt_line.bank_account_to
+            )
         else:
             stmt_line.bank_account_to = None
 
@@ -285,10 +289,10 @@ this line's account: {}".format(self.statement.account_id, line[1])
 
 
 class Plugin(BasePlugin):
-    """ASN Bank, The Netherlands, CSV (https://www.asnbank.nl/)
-    """
+    """ASN Bank, The Netherlands, CSV (https://www.asnbank.nl/)"""
+
     def get_parser(self, filename: str) -> Parser:
-        p = re.compile('transactie-historie_(NL\\d+ASNB\\d+)_\\d+\\.csv')
+        p = re.compile("transactie-historie_(NL\\d+ASNB\\d+)_\\d+\\.csv")
         m = p.search(filename)
         account_id: Optional[str] = None
         if m:

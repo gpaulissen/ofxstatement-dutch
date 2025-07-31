@@ -28,9 +28,9 @@ class Parser(BaseStatementParser):  # type: ignore
 
     def __init__(self, fin: Iterable[str]) -> None:
         super().__init__()
-        self.statement = Statement(bank_id=None,
-                                   account_id=None,
-                                   currency='EUR')  # My Statement
+        self.statement = Statement(
+            bank_id=None, account_id=None, currency="EUR"
+        )  # My Statement
         self.fin = fin
         self.unique_id_set = set()
 
@@ -65,73 +65,83 @@ class Parser(BaseStatementParser):  # type: ignore
 
         # determine sign_out
         assert isinstance(transaction_type_in, str)
-        assert transaction_type_in in ['Af', 'Bij', '  ']
+        assert transaction_type_in in ["Af", "Bij", "  "]
 
-        if transaction_type_in == 'Af':
+        if transaction_type_in == "Af":
             sign_out = -1
 
         # determine amount_out
         assert isinstance(amount_in, str)
         # Amount something like 1.827,97, € 1.827,97 (both dutch) or 1,827.97?
         # Since April 2025 it may be €1.827,97 as well
-        m = re.search(r'^(\S+\s|\D)?([0-9,.]+)$', amount_in)
+        m = re.search(r"^(\S+\s|\D)?([0-9,.]+)$", amount_in)
         assert m is not None
         amount_out = m.group(2)
-        if amount_out[-3] == ',':
-            amount_out = amount_out.replace('.', '').replace(',', '.')
+        if amount_out[-3] == ",":
+            amount_out = amount_out.replace(".", "").replace(",", ".")
 
         # convert to str to keep just the last two decimals
         amount_out = sign_out * Decimal(str(amount_out))
-        logger.debug("get_amount(%s, %s) = %s", amount_in, transaction_type_in, amount_out)
+        logger.debug(
+            "get_amount(%s, %s) = %s", amount_in, transaction_type_in, amount_out
+        )
         return amount_out
 
     def split_records(self) -> Iterator[Any]:
-        """Return iterable object consisting of a line per transaction
-        """
-        def convert_str_to_list(str: str,
-                                max_items: Optional[int] = None,
-                                sep: str = r'\s\s+|\t|\n') -> List[str]:
+        """Return iterable object consisting of a line per transaction"""
+
+        def convert_str_to_list(
+            str: str, max_items: Optional[int] = None, sep: str = r"\s\s+|\t|\n"
+        ) -> List[str]:
             return [x for x in re.split(sep, str)[0:max_items]]
 
         first_line = True
-        first_line_row = ['International Card Services BV', 'www.icscards.nl']
+        first_line_row = ["International Card Services BV", "www.icscards.nl"]
 
         new_page = False
-        new_page_row = ['Datum', 'ICS-klantnummer', 'Volgnummer', 'Bladnummer']
+        new_page_row = ["Datum", "ICS-klantnummer", "Volgnummer", "Bladnummer"]
 
         balance = False
-        balance_row = ['Vorig openstaand saldo', 'Totaal ontvangen betalingen',
-                       'Totaal nieuwe uitgaven', 'Nieuw openstaand saldo']
+        balance_row = [
+            "Vorig openstaand saldo",
+            "Totaal ontvangen betalingen",
+            "Totaal nieuwe uitgaven",
+            "Nieuw openstaand saldo",
+        ]
 
         # 01 sep          01 sep            IDEAL BETALING, DANK U                                                                                                          1.311,73       Bij
         # 21 feb         22 feb            APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
         # Since April 2025 (period after month):
         # 21 mrt.        22 mrt.           APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
-        statement_expr = \
-            re.compile(r'^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij|  )$')
+        statement_expr = re.compile(
+            r"^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij|  )$"
+        )
         country = re.compile("^[A-Z][A-Z]$")
 
         for line in self.fin:
             line = line.strip()
 
-            logger.debug('line: %s', line)
+            logger.debug("line: %s", line)
 
             # to ease the parsing pain
             row: List[str] = convert_str_to_list(line)
 
-            logger.debug('row: %s', row)
-            logger.debug("before parsing line: self.statement: %s; first_line: %s; new_page: %s; balance: %s",
-                         self.statement,
-                         first_line,
-                         new_page,
-                         balance)
+            logger.debug("row: %s", row)
+            logger.debug(
+                "before parsing line: self.statement: %s; first_line: %s; new_page: %s; balance: %s",
+                self.statement,
+                first_line,
+                new_page,
+                balance,
+            )
 
             if first_line and len(row) > 1:
-                assert row == first_line_row, \
-                    "Expected: {0}\nActual: {1}".format(first_line_row, row)
+                assert row == first_line_row, "Expected: {0}\nActual: {1}".format(
+                    first_line_row, row
+                )
                 first_line = False
 
-            if len(row) == 2 and row[1][0:5] == 'BIC: ':
+            if len(row) == 2 and row[1][0:5] == "BIC: ":
                 self.statement.bank_id = row[1][5:]
 
             elif row == new_page_row:
@@ -139,9 +149,7 @@ class Parser(BaseStatementParser):  # type: ignore
             elif new_page:
                 new_page = False
                 # exclusive in ICSCards
-                self.statement.end_date = \
-                    datetime.strptime(row[0],
-                                      '%d %B %Y')
+                self.statement.end_date = datetime.strptime(row[0], "%d %B %Y")
                 self.statement.account_id = row[1]
 
             elif row == balance_row:
@@ -150,23 +158,21 @@ class Parser(BaseStatementParser):  # type: ignore
                 balance = False
                 # Row has 4 times an amount and after each amount there may be "Af" or "Bij"
                 assert len(row) >= 4 and len(row) <= 8
-                if row[-1] not in ['Af', 'Bij']:
-                    row.append('  ')
-                if row[-3] not in ['Af', 'Bij']:
-                    row.insert(-2, '  ')
-                if row[-5] not in ['Af', 'Bij']:
-                    row.insert(-4, '  ')
-                if row[-7] not in ['Af', 'Bij']:
-                    row.insert(-6, '  ')
+                if row[-1] not in ["Af", "Bij"]:
+                    row.append("  ")
+                if row[-3] not in ["Af", "Bij"]:
+                    row.insert(-2, "  ")
+                if row[-5] not in ["Af", "Bij"]:
+                    row.insert(-4, "  ")
+                if row[-7] not in ["Af", "Bij"]:
+                    row.insert(-6, "  ")
                 assert len(row) == 8
                 for i in range(int(len(row) / 2)):
-                    assert row[i * 2] not in ['Af', 'Bij', '  ']
-                    assert row[i * 2 + 1] in ['Af', 'Bij', '  ']
+                    assert row[i * 2] not in ["Af", "Bij", "  "]
+                    assert row[i * 2 + 1] in ["Af", "Bij", "  "]
 
-                self.statement.start_balance = Parser.get_amount(row[0],
-                                                                 row[1])
-                self.statement.end_balance = Parser.get_amount(row[-2],
-                                                               row[-1])
+                self.statement.start_balance = Parser.get_amount(row[0], row[1])
+                self.statement.end_balance = Parser.get_amount(row[-2], row[-1])
 
             elif re.search(statement_expr, line):
                 # payee, place and country may be something like:
@@ -178,7 +184,7 @@ class Parser(BaseStatementParser):  # type: ignore
                     if country.match(row[i]):
                         # Should have 4 columns to the left. If not: reduce.
                         while i > 4:
-                            row[2] += ' ' + row[3]
+                            row[2] += " " + row[3]
                             del row[3]
                             i -= 1
                         break
@@ -190,17 +196,18 @@ class Parser(BaseStatementParser):  # type: ignore
 
                     row.insert(2, row[2][0:25])
                     row[3] = row[3][25:]
-                logger.debug('yield row: %s', row)
+                logger.debug("yield row: %s", row)
                 yield row
-            logger.debug("after parsing line : self.statement: %s; first_line: %s; new_page: %s; balance: %s",
-                         self.statement,
-                         first_line,
-                         new_page,
-                         balance)
+            logger.debug(
+                "after parsing line : self.statement: %s; first_line: %s; new_page: %s; balance: %s",
+                self.statement,
+                first_line,
+                new_page,
+                balance,
+            )
 
     def parse_record(self, row: List[str]) -> Optional[StatementLine]:
-        """Parse given transaction line and return StatementLine object
-        """
+        """Parse given transaction line and return StatementLine object"""
 
         def add_years(dt: datetime, years: int) -> datetime:
             """Return a date that's `years` years after the date (or datetime)
@@ -209,9 +216,11 @@ class Parser(BaseStatementParser):  # type: ignore
             (thus changing February 29 to March 1).
 
             """
-            result: datetime = dt.replace(year=dt.year + years, month=3, day=1) \
-                if dt.month == 2 and dt.day == 29 \
+            result: datetime = (
+                dt.replace(year=dt.year + years, month=3, day=1)
+                if dt.month == 2 and dt.day == 29
                 else dt.replace(year=dt.year + years)
+            )
             logger.debug("add_years(%s, %d) = %s", dt, years, result)
             return result
 
@@ -219,17 +228,22 @@ class Parser(BaseStatementParser):  # type: ignore
             # Without a year it will be 1900 so add the year
             assert self.statement.end_date and self.statement.end_date.year
             # GJP 2025-07-31 Sometimes abbreviated months will be displayed with a period, sometimes without
-            format = '%d %b %Y'
+            format = "%d %b %Y"
             dt: Optional[datetime]
-            for period in ['', '.']:
+            for period in ["", "."]:
                 d_m_y = "{}{} {}".format(d_m, period, self.statement.end_date.year)
                 try:
                     dt = datetime.strptime(d_m_y, format)
                     break  # all is well
                 except ValueError as e:
-                    if period == '.':  # last try
+                    if period == ".":  # last try
                         current_locale = locale.setlocale(category=locale.LC_ALL)
-                        logger.error("Could not parse %s against format %s with locale %s", d_m_y, format, current_locale)
+                        logger.error(
+                            "Could not parse %s against format %s with locale %s",
+                            d_m_y,
+                            format,
+                            current_locale,
+                        )
                         raise e
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
@@ -238,7 +252,7 @@ class Parser(BaseStatementParser):  # type: ignore
             assert dt is None or dt <= self.statement.end_date
             return dt
 
-        logger.debug('parse_record(%s)', str(row))
+        logger.debug("parse_record(%s)", str(row))
         assert len(row) in [5, 7, 8]
 
         stmt_line: Optional[StatementLine] = None
@@ -246,7 +260,7 @@ class Parser(BaseStatementParser):  # type: ignore
         # Skip transaction date (index 0) since it gives a wrong balance.
         # Use booking date (index 1) in order to get a correct balance.
         # Since April 2025 the month will end in a period ('.').
-        date = get_date(row[1][:-1] if row[1].endswith('.') else row[1])
+        date = get_date(row[1][:-1] if row[1].endswith(".") else row[1])
 
         payee = None
         memo = None
@@ -263,25 +277,22 @@ class Parser(BaseStatementParser):  # type: ignore
 
         # Remove zero-value notifications
         if amount != 0:
-            stmt_line = StatementLine(date=date,
-                                      memo=memo,
-                                      amount=amount)
+            stmt_line = StatementLine(date=date, memo=memo, amount=amount)
             stmt_line.payee = payee
             adjust_statement_line(stmt_line, self.unique_id_set)
 
-        logger.debug('stmt_line: %s', stmt_line)
+        logger.debug("stmt_line: %s", stmt_line)
         return stmt_line
 
 
 class Plugin(BasePlugin):
-    """ICSCards, The Netherlands, PDF (https://icscards.nl/)
-    """
+    """ICSCards, The Netherlands, PDF (https://icscards.nl/)"""
 
     def get_file_object_parser(self, fh: Iterable[str]) -> Parser:
         return Parser(fh)
 
     def get_parser(self, filename: str) -> Parser:
-        pdftotext = ["pdftotext", "-layout", filename, '-']
+        pdftotext = ["pdftotext", "-layout", filename, "-"]
         fh: Iterable[str]
 
         # Is it a PDF or an already converted file?
