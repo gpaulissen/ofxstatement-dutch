@@ -1,17 +1,25 @@
 {
-  "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-  "packages": ["python@3.14"],
-  "shell": {
-      "init_hook": [
-          ". $VENV_DIR/bin/activate",
-          "pip install -r requirements.txt",
-          "pip install -r test_requirements.txt",
-          "pip install -e ."
-      ],
-      "scripts": {
-          "test": [
-              "echo \"Error: no test specified\" && exit 1"
-          ]
-      }
-  }
+    "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+    "packages": ["python@3.14"],
+    "env": {
+        "PY_IGNORE_IMPORTMISMATCH": "1"
+    },
+    "shell": {
+        "init_hook": [
+            ". $VENV_DIR/bin/activate"
+        ],
+        "scripts": {
+            "init": [
+                "pip install -r requirements.txt",
+                "pip install -e ."
+            ],
+            "init-test": [
+                "pip install -r test_requirements.txt"
+            ],
+            "test": [
+                "mypy --show-error-codes src",
+	              "python -m pytest --log-level=INFO --exitfirst src"
+            ]
+        }
+    }
 }

@@ -8,7 +8,6 @@ BRANCH 	           := master
 GIT                := git
 # least important first (can not stop easily in foreach)
 PYTHON_EXECUTABLES := python python3 
-MYPY = mypy
 # PYTHON is determined later on so do not use PIP := but PIP =
 PIP                 = $(PYTHON) -O -m pip $(VERBOSE)
 MYPY               := mypy
@@ -73,7 +72,7 @@ install: clean ## Install the package to the Python installation path.
 test: ## Test the package.
 	$(PIP) install -r test_requirements.txt
 	$(MYPY) --show-error-codes src
-	$(PYTHON) -m pytest $(PYTEST_OPTIONS)
+	$(PYTHON) -m pytest $(PYTEST_OPTIONS) src
 
 dist: install test ## Prepare the distribution the package by installing and testing it.
 	$(PYTHON) setup.py sdist bdist_wheel
