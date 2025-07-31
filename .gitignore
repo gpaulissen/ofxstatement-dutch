@@ -16,3 +16,5 @@ htmlcov
 *.log
 .mypy_cache
 tests/samples/textrepl.dat
+.pdm-python
+pdm.lock

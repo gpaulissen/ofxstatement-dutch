@@ -1,0 +1,20 @@
+
+[project]
+name = "ofxstatement-dutch"
+version = "1.8.0"
+description = "ofxstatement plugin for dutch financial institutions"
+authors = [
+    {name = "Gert-Jan Paulissen", email = "12508981+gpaulissen@users.noreply.github.com"},
+]
+dependencies = []
+requires-python = ">=3.6"
+readme = "README.md"
+license = {text = "GPLv3"}
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+
+[tool.pdm]
+distribution = true
