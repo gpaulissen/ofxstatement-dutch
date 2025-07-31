@@ -9,9 +9,9 @@ import logging
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError, ValidationError
-from ofxstatement.statement import BankAccount
+from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine
 
-from ofxstatement_dutch.statement import Statement, StatementLine
+from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -134,7 +134,7 @@ Boekdatum;
                         'Referentie',
                         'Boekdatum']]
 
-    def parse(self) -> StatementLine:
+    def parse(self) -> BaseStatement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -142,7 +142,7 @@ Boekdatum;
         """
 
         # Python 3 needed
-        stmt: StatementLine = super().parse()
+        stmt: BaseStatement = super().parse()
 
         try:
             assert len(self.header) == 0, \
@@ -157,10 +157,14 @@ Boekdatum;
             # No need to (re)calculate the balance since there is no history.
             # But set the dates.
             stmt.start_balance = stmt.end_balance = None
-            stmt.start_date = min(sl.date for sl in stmt.lines)
+            min_date = min(sl.date for sl in stmt.lines if sl.date is not None)
+            if min_date:
+                stmt.start_date = min_date
             # end date is exclusive for OFX
-            stmt.end_date = max(sl.date for sl in stmt.lines)
-            stmt.end_date += datetime.timedelta(days=1)
+            max_date = max(sl.date for sl in stmt.lines if sl.date is not None)
+            if max_date:
+                stmt.end_date = max_date
+                stmt.end_date += datetime.timedelta(days=1)
         except Exception as e:
             raise ValidationError(str(e), stmt)
 
@@ -214,18 +218,18 @@ this line's account: {}".format(self.statement.account_id,
                                      line[self.mappings['bank_account_to']])
 
             # Python 3 needed
-            stmt_line: StatementLine = super().parse_record(line)
+            stmt_line: Optional[StatementLine] = super().parse_record(line)
+
+            if stmt_line is None:
+                return None
 
             # Remove zero-value notifications
             if stmt_line.amount == 0:
                 return None
 
-            # Determine some fields not in the self.mappings
-            # A hack but needed to use the adjust method
-            stmt_line.__class__ = StatementLine
-            stmt_line.adjust(self.unique_id_set)
+            adjust_statement_line(stmt_line, self.unique_id_set)
 
-            if stmt_line.amount < 0:
+            if stmt_line.amount and stmt_line.amount < 0:
                 stmt_line.trntype = "DEBIT"
             else:
                 stmt_line.trntype = "CREDIT"
@@ -233,7 +237,7 @@ this line's account: {}".format(self.statement.account_id,
             if stmt_line.bank_account_to:
                 stmt_line.bank_account_to = \
                     BankAccount(bank_id='',
-                                acct_id=stmt_line.bank_account_to)
+                                acct_id=stmt_line.bank_account_to.acct_id)
         except Exception as e:
             raise ParseError(self.cur_record, str(e))
 

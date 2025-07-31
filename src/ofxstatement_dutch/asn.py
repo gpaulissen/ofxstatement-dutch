@@ -11,9 +11,9 @@ from decimal import Decimal
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import BankAccount
+from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine, recalculate_balance
 
-from ofxstatement_dutch.statement import Statement, StatementLine
+from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -178,7 +178,7 @@ class Parser(CsvStatementParser):
                                    account_id=account_id,
                                    currency="EUR")  # My Statement
 
-    def parse(self) -> Statement:
+    def parse(self) -> BaseStatement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -186,18 +186,16 @@ class Parser(CsvStatementParser):
         """
 
         # Python 3 needed
-        stmt: Statement = super().parse()
+        stmt: BaseStatement = super().parse()
 
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
         # But set the dates.
         if stmt.lines:
-            stmt.start_date = min(sl.date for sl in stmt.lines)
+            recalculate_balance(stmt)
             # end date is exclusive for OFX
-            stmt.end_date = max(sl.date for sl in stmt.lines)
-            stmt.end_date += datetime.timedelta(days=1)
-            stmt.start_balance = Decimal(stmt.lines[0].start_balance)
-            stmt.end_balance = Decimal(stmt.lines[-1].start_balance) + stmt.lines[-1].amount
+            if stmt.end_date:
+                stmt.end_date += datetime.timedelta(days=1)
 
         return stmt
 
@@ -212,7 +210,7 @@ class Parser(CsvStatementParser):
         """Parse given transaction line and return StatementLine object
         """
 
-        stmt_line: StatementLine
+        stmt_line: Optional[StatementLine]
 
         try:
             logger.debug('line #%d: %s',
@@ -247,13 +245,11 @@ this line's account: {}".format(self.statement.account_id, line[1])
             line[self.mappings['payee']] = ''
 
         # Python 3 needed
-        stmt_line: StatementLine = super().parse_record(line)
+        stmt_line: Optional[StatementLine] = super().parse_record(line)
 
         # Remove zero-value notifications
-        if stmt_line.amount == 0:
+        if stmt_line is None or stmt_line.amount is None or stmt_line.amount == 0:
             return None
-
-        stmt_line.__class__ = StatementLine
 
         # The unique id is a combination of 'Journaaldatum' and 'Volgnummer transactie'
         # Let id be <Journaaldatum in yyyymmdd format>.<Volgnummer transactie>
@@ -267,7 +263,6 @@ this line's account: {}".format(self.statement.account_id, line[1])
                                           dd_mm_yyyy[0:2],
                                           line[transaction_nr])
 
-        stmt_line.start_balance = Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0)
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"
@@ -277,7 +272,7 @@ this line's account: {}".format(self.statement.account_id, line[1])
         if stmt_line.bank_account_to:
             stmt_line.bank_account_to = \
                 BankAccount(bank_id='',
-                            acct_id=stmt_line.bank_account_to)
+                            acct_id=stmt_line.bank_account_to.acct_id)
         else:
             stmt_line.bank_account_to = None
 

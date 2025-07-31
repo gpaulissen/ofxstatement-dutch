@@ -12,8 +12,9 @@ import logging
 
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import StatementParser as BaseStatementParser
+from ofxstatement.statement import Statement as BaseStatement, StatementLine
 
-from ofxstatement_dutch.statement import Statement, StatementLine
+from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -33,13 +34,13 @@ class Parser(BaseStatementParser):  # type: ignore
         self.fin = fin
         self.unique_id_set = set()
 
-    def parse(self) -> Statement:
+    def parse(self) -> BaseStatement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
         process the file.
         """
-        stmt: Optional[Statement] = None
+        stmt: Optional[BaseStatement] = None
         # Save locale
         current_locale = locale.setlocale(category=locale.LC_ALL)
         # Need to parse "05 mei" i.e. "05 may"
@@ -217,14 +218,19 @@ class Parser(BaseStatementParser):  # type: ignore
         def get_date(d_m: str) -> Optional[datetime]:
             # Without a year it will be 1900 so add the year
             assert self.statement.end_date and self.statement.end_date.year
-            d_m_y = "{} {}".format(d_m, self.statement.end_date.year)
+            # GJP 2025-07-31 Sometimes abbreviated months will be displayed with a period, sometimes without
             format = '%d %b %Y'
-            try:
-                dt: Optional[datetime] = datetime.strptime(d_m_y, format)
-            except ValueError as e:
-                current_locale = locale.setlocale(category=locale.LC_ALL)
-                logger.error("Could not parse %s against format %s with locale %s", d_m_y, format, current_locale)
-                raise e
+            dt: Optional[datetime]
+            for period in ['', '.']:
+                d_m_y = "{}{} {}".format(d_m, period, self.statement.end_date.year)
+                try:
+                    dt = datetime.strptime(d_m_y, format)
+                    break  # all is well
+                except ValueError as e:
+                    if period == '.':  # last try
+                        current_locale = locale.setlocale(category=locale.LC_ALL)
+                        logger.error("Could not parse %s against format %s with locale %s", d_m_y, format, current_locale)
+                        raise e
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
             if dt and dt > self.statement.end_date:
@@ -261,7 +267,7 @@ class Parser(BaseStatementParser):  # type: ignore
                                       memo=memo,
                                       amount=amount)
             stmt_line.payee = payee
-            stmt_line.adjust(self.unique_id_set)
+            adjust_statement_line(stmt_line, self.unique_id_set)
 
         logger.debug('stmt_line: %s', stmt_line)
         return stmt_line

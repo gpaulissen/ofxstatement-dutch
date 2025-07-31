@@ -10,9 +10,9 @@ import logging
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import BankAccount
+from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine
 
-from ofxstatement_dutch.statement import Statement, StatementLine
+from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -152,7 +152,7 @@ class Parser(CsvStatementParser):
         self.unique_id_set = set()
         self.header_idx = -1
 
-    def parse(self) -> Statement:
+    def parse(self) -> BaseStatement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -160,8 +160,10 @@ class Parser(CsvStatementParser):
         """
 
         # Python 3 needed
-        stmt: Statement = super().parse()
+        stmt: Optional[BaseStatement] = super().parse()
 
+        assert stmt is not None
+        
         try:
             assert self.header_idx >= 0 and self.header_idx < len(self.header), \
                 "Header not read: {}".format(str(self.header))
@@ -172,14 +174,14 @@ class Parser(CsvStatementParser):
             # GJP 2020-03-03
             # No need to (re)calculate the balance since there is no history.
             # But set the dates.
-            stmt.start_balance = stmt.end_balance = None
-            stmt.start_date = min(sl.date for sl in stmt.lines)
+            BaseStatement.start_balance = BaseStatement.end_balance = None
+            stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
             # end date is exclusive for OFX
-            stmt.end_date = max(sl.date for sl in stmt.lines)
+            stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
             stmt.end_date += datetime.timedelta(days=1)
         elif self.header_idx == 1:
             stmt.start_date = stmt.start_balance = None
-            stmt.end_date = max(sl.date for sl in stmt.lines)
+            stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
             assert stmt.lines[0].date == stmt.end_date or \
                 stmt.lines[-1].date == stmt.end_date
             end_idx: int = 0 if stmt.lines[0].date == stmt.end_date else -1
@@ -285,18 +287,15 @@ this line's account: {}".format(self.statement.account_id, line[2])
             line[self.mappings['payee']] = ''
 
         # Python 3 needed
-        stmt_line: StatementLine = super().parse_record(line)
+        stmt_line: Optional[StatementLine] = super().parse_record(line)
 
         # Remove zero-value notifications
-        if stmt_line.amount == 0:
+        if stmt_line is None or stmt_line is None or stmt_line.amount == 0:
             return None
 
-        # Determine some fields not in the self.mappings
-        # A hack but needed to use the adjust method
-        stmt_line.__class__ = StatementLine
-        stmt_line.adjust(self.unique_id_set)
+        adjust_statement_line(stmt_line, self.unique_id_set)
 
-        if stmt_line.amount < 0:
+        if stmt_line.amount is None or stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"
         else:
             stmt_line.trntype = "CREDIT"
@@ -304,19 +303,19 @@ this line's account: {}".format(self.statement.account_id, line[2])
         if stmt_line.bank_account_to:
             stmt_line.bank_account_to = \
                 BankAccount(bank_id='',
-                            acct_id=stmt_line.bank_account_to)
+                            acct_id=stmt_line.bank_account_to.acct_id)
         return stmt_line
 
     def parse_balance(self,
                       line: List[str]) -> Optional[StatementLine]:
         # Python 3 needed
-        stmt_line: StatementLine = super().parse_record(line)
-        stmt_line.trntype = "DEBIT" if stmt_line.amount < 0 else "CREDIT"
-        stmt_line.id = 1
-        # Determine some fields not in the self.mappings
-        # A hack but needed to use the adjust method
-        stmt_line.__class__ = StatementLine
-        stmt_line.adjust(self.unique_id_set)
+        stmt_line: Optional[StatementLine] = super().parse_record(line)
+
+        assert stmt_line is not None
+        
+        stmt_line.trntype = "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
+        stmt_line.id = "1"
+        adjust_statement_line(stmt_line, self.unique_id_set)
         return stmt_line
 
 

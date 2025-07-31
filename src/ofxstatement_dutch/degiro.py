@@ -9,7 +9,9 @@ from decimal import Decimal
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement_dutch.statement import Statement, StatementLine
+from ofxstatement.statement import Statement as BaseStatement, StatementLine
+
+from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."
@@ -123,7 +125,7 @@ EUR,"13,87",
                         "",
                         "Order Id"]]
 
-    def parse(self) -> Statement:
+    def parse(self) -> BaseStatement:
         """Main entry point for parsers
 
         super() implementation will call to split_records and parse_record to
@@ -131,7 +133,7 @@ EUR,"13,87",
         """
 
         # Python 3 needed
-        stmt: Statement = super().parse()
+        stmt: BaseStatement = super().parse()
 
         try:
             assert len(self.header) == 0, \
@@ -144,9 +146,9 @@ EUR,"13,87",
         # But set the dates.
         stmt.start_balance = stmt.end_balance = None
         if stmt.lines:
-            stmt.start_date = min(sl.date for sl in stmt.lines)
+            stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
             # end date is exclusive for OFX
-            stmt.end_date = max(sl.date for sl in stmt.lines)
+            stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
             stmt.end_date += datetime.timedelta(days=1)
 
         logger.debug('stmt: %r', stmt)
@@ -177,10 +179,10 @@ EUR,"13,87",
             return None
 
         # Python 3 needed
-        stmt_line: StatementLine = super().parse_record(line)
+        stmt_line: Optional[StatementLine] = super().parse_record(line)
 
         # Remove zero-value notifications
-        if stmt_line.amount is None or stmt_line.amount == 0:
+        if stmt_line is None or stmt_line.amount is None or stmt_line.amount == 0:
             return None
 
         # Forget conversions
@@ -193,7 +195,7 @@ EUR,"13,87",
             stmt_line.trntype = "INT"
         elif stmt_line.memo == 'DEGIRO transactiekosten':
             stmt_line.trntype = "FEE"
-        elif stmt_line.memo[0:25] == 'DEGIRO Aansluitingskosten':
+        elif stmt_line.memo and stmt_line.memo[0:25] == 'DEGIRO Aansluitingskosten':
             stmt_line.trntype = "SRVCHG"
         elif stmt_line.memo == 'Terugstorting':
             stmt_line.trntype = "XFER"
@@ -207,18 +209,16 @@ EUR,"13,87",
         if stmt_line.trntype not in ["XFER", "DEP"]:
             return None
 
-        # Determine some fields not in the self.mappings
-        # A hack but needed to use the adjust method
-        stmt_line.__class__ = StatementLine
-        stmt_line.adjust(self.unique_id_set)
+        adjust_statement_line(stmt_line, self.unique_id_set)
 
         # Product known?
         if line[self.mappings['memo'] - 2]:  # pragma: no cover
-            stmt_line.memo += ' ' + line[self.mappings['memo'] - 2]
-            # ISIN known?
-            if line[self.mappings['memo'] - 1]:
-                stmt_line.memo +=\
-                    ' (' + line[self.mappings['memo'] - 1] + ')'
+            if stmt_line.memo:
+                stmt_line.memo += ' ' + line[self.mappings['memo'] - 2]
+                # ISIN known?
+                if line[self.mappings['memo'] - 1]:
+                    stmt_line.memo +=\
+                        ' (' + line[self.mappings['memo'] - 1] + ')'
 
         return stmt_line
 

@@ -46,19 +46,23 @@ largest statement line date ({})".format(end_date, max_date)
             raise ValidationError(str(e), self)
 
 
-class StatementLine(BaseStatementLine):
-    """Statement line data with an adjust method.
-    """
-    def adjust(self, unique_id_set: Set[str]) -> None:
-        if self.id:
-            return
+def adjust_statement_line(statement_line: BaseStatementLine, unique_id_set: Set[str]) -> None:
+    if statement_line.id:
+        return
 
-        self.id = \
-            generate_unique_transaction_id(self, unique_id_set)
-        m = re.match(r'([0-9a-f]+)(-\d+)?$', self.id)
-        assert m, "Id should match hexadecimal digits, \
-optionally followed by a minus and a counter: '{}'".format(self.id)
-        if m.group(2):
-            counter = int(m.group(2)[1:])
-            # include counter so the memo gets unique
-            self.memo = self.memo + ' #' + str(counter + 1)  # type: ignore
+    statement_line.id = \
+        generate_unique_transaction_id(statement_line, unique_id_set)
+    m = re.match(r'([0-9a-f]+)(-\d+)?$', statement_line.id)
+    assert m, "Id should match hexadecimal digits, \
+optionally followed by a minus and a counter: '{}'".format(statement_line.id)
+    if m.group(2):
+        counter = int(m.group(2)[1:])
+        # include counter so the memo gets unique
+        statement_line.memo = statement_line.memo + ' #' + str(counter + 1)  # type: ignore
+
+
+#class StatementLine(BaseStatementLine):
+#    """Statement line data with an adjust method.
+#    """
+#    def adjust(self, unique_id_set: Set[str]) -> None:
+#        adjust_statement_line(self, unique_id_set)
