@@ -11,7 +11,7 @@ from decimal import Decimal
 from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine, recalculate_balance
+from ofxstatement.statement import BankAccount, Statement as BaseStatement, StatementLine
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
@@ -192,10 +192,13 @@ class Parser(CsvStatementParser):
         # No need to (re)calculate the balance since there is no history.
         # But set the dates.
         if stmt.lines:
-            recalculate_balance(stmt)
+            stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
+            stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
             # end date is exclusive for OFX
             if stmt.end_date:
                 stmt.end_date += datetime.timedelta(days=1)
+            Statement.start_balance = getattr(stmt.lines[0], "start_balance")
+            Statement.end_balance = getattr(stmt.lines[-1], "start_balance") + stmt.lines[-1].amount
 
         return stmt
 
@@ -263,16 +266,18 @@ this line's account: {}".format(self.statement.account_id, line[1])
                                           dd_mm_yyyy[0:2],
                                           line[transaction_nr])
 
+        # We can not use stmt_line.start_balance since that does not exist
+        setattr(stmt_line, "start_balance", Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0))
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"
         else:
             stmt_line.trntype = "CREDIT"
 
-        if stmt_line.bank_account_to:
+        if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
             stmt_line.bank_account_to = \
                 BankAccount(bank_id='',
-                            acct_id=stmt_line.bank_account_to.acct_id)
+                            acct_id=stmt_line.bank_account_to)
         else:
             stmt_line.bank_account_to = None
 

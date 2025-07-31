@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import re
-from typing import Set, Union
+from typing import Set, Union, Optional
 
 from ofxstatement.statement import StatementLine as BaseStatementLine
 from ofxstatement.statement import Statement as BaseStatement
@@ -19,6 +19,17 @@ def _to_date(d_t: Union[date, datetime]) -> date:
 
 
 class Statement(BaseStatement):
+
+    def __init__(
+        self,
+        bank_id: Optional[str] = None,
+        account_id: Optional[str] = None,
+        currency: Optional[str] = None,
+        account_type: str = "CHECKING",
+    ) -> None:
+        super().__init__(bank_id, account_id, currency, account_type)
+        Statement.start_balance = Statement.end_balance = None  # reset so test test_icscards.test_fail() will run
+
     def assert_valid(self) -> None:
 
         logger.debug("self: type: %s; contents: %s", type(self), self)

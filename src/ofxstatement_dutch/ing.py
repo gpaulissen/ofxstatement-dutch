@@ -300,10 +300,11 @@ this line's account: {}".format(self.statement.account_id, line[2])
         else:
             stmt_line.trntype = "CREDIT"
 
-        if stmt_line.bank_account_to:
+        if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
             stmt_line.bank_account_to = \
                 BankAccount(bank_id='',
-                            acct_id=stmt_line.bank_account_to.acct_id)
+                            acct_id=stmt_line.bank_account_to)
+
         return stmt_line
 
     def parse_balance(self,

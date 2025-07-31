@@ -234,10 +234,10 @@ this line's account: {}".format(self.statement.account_id,
             else:
                 stmt_line.trntype = "CREDIT"
 
-            if stmt_line.bank_account_to:
+            if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
                 stmt_line.bank_account_to = \
                     BankAccount(bank_id='',
-                                acct_id=stmt_line.bank_account_to.acct_id)
+                                acct_id=stmt_line.bank_account_to)
         except Exception as e:
             raise ParseError(self.cur_record, str(e))
 
