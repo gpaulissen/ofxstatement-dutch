@@ -10,15 +10,28 @@
         ],
         "scripts": {
             "init": [
-                "pip install -r requirements.txt",
+                "pip install --upgrade pip",
                 "pip install -e ."
             ],
-            "init-test": [
-                "pip install -r test_requirements.txt"
+            "init-dev": [
+                "devbox run init",
+                "pip install -e '.[dev]'"
+            ],
+            "clean": [
+                "git clean -d -x -i"
             ],
             "test": [
-                "mypy --show-error-codes src",
-	              "python -m pytest --log-level=INFO --exitfirst src"
+                "devbox run test-mypy",
+                "devbox run test-pytest"
+            ],
+            "test-mypy": [
+                "mypy --show-error-codes src"
+            ],
+            "test-pytest": [
+                "python -m pytest --log-level=INFO --exitfirst tests"
+            ],
+            "format": [
+                "ruff format ."
             ]
         }
     }

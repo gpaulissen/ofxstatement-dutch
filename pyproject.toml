@@ -42,7 +42,7 @@ nl-knab = "ofxstatement.plugins.nl.knab:Plugin"
 nl-asn = "ofxstatement.plugins.nl.asn:Plugin"
 
 [project.optional-dependencies]
-tests = [
+dev = [
     "pyyaml",
     "pytest",
     "pytest-cache",
@@ -50,6 +50,7 @@ tests = [
     "pytest-flakes",
     "pytest-pycodestyle",
     "flake8",
+		"ruff"
 ]
 
 [tool.setuptools]
@@ -62,3 +63,11 @@ addopts = "-ra -q"
 testpaths = [
     "tests",
 ]
+
+[tool.mypy]
+strict = true
+disallow_subclassing_any = false
+
+[[tool.mypy.overrides]]
+module = [ 'ofxstatement', 'bs4' ]
+ignore_missing_imports = true

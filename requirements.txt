@@ -1,3 +1,0 @@
-ofxstatement>0.6.4
-twine
-setuptools
