@@ -5,13 +5,18 @@ PROJECT            := ofxstatement-dutch
 ABOUT_PY 	         := __about__.py
 BRANCH 	           := master
 
-PYTHON             := python
 GIT                := git
-# least important first (can not stop easily in foreach)
-PYTHON_EXECUTABLES := python python3 
+
+ifdef VENV_DIR
+python_bin_dir := $(VENV_DIR)/bin/
+else
+python_bin_dir := 
+endif
+
+PYTHON             := $(python_bin_dir)python
 # PYTHON is determined later on so do not use PIP := but PIP =
 PIP                 = $(PYTHON) -O -m pip $(VERBOSE)
-MYPY               := mypy
+MYPY               := $(python_bin_dir)mypy
 # Otherwise perl may complain on a Mac
 LANG = C
 PYTEST_LOG_LEVEL   := INFO
@@ -56,7 +61,7 @@ install: clean ## Install the package to the Python installation path.
 test: ## Test the package.
 	$(PIP) install -r test_requirements.txt
 	$(MYPY) --show-error-codes src
-	$(PYTHON) -m pytest $(PYTEST_OPTIONS) tests
+	PYTHONPATH=src $(PYTHON) -m pytest $(PYTEST_OPTIONS) tests
 
 dist: install test ## Prepare the distribution the package by installing and testing it.
 	$(PYTHON) setup.py sdist bdist_wheel
