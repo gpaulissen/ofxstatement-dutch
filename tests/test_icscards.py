@@ -5,7 +5,7 @@ from decimal import Decimal
 import pytest
 from datetime import datetime
 
-from ofxstatement.plugins.nl.icscards import Plugin
+from ofxstatement_dutch.icscards import Plugin
 
 
 class ParserTest(TestCase):

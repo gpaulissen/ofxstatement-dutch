@@ -8,7 +8,7 @@ from datetime import datetime
 
 from ofxstatement.exceptions import ParseError, ValidationError
 
-from ofxstatement.plugins.nl.knab import Parser, Plugin
+from ofxstatement_dutch.knab import Parser, Plugin
 
 
 class ParserTest(TestCase):

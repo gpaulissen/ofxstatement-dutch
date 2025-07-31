@@ -11,7 +11,7 @@ from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError, ValidationError
 from ofxstatement.statement import BankAccount
 
-from ofxstatement.plugins.nl.statement import Statement, StatementLine
+from ofxstatement_dutch.statement import Statement, StatementLine
 
 # Need Python 3 for super() syntax
 assert sys.version_info[0] >= 3, "At least Python 3 is required."

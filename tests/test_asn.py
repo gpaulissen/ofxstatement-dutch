@@ -6,7 +6,7 @@ from datetime import datetime
 
 from ofxstatement.exceptions import ParseError
 
-from ofxstatement.plugins.nl.asn import Plugin
+from ofxstatement_dutch.asn import Plugin
 
 
 class ParserTest(TestCase):

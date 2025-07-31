@@ -35,11 +35,11 @@ build-backend = "setuptools.build_meta"
 Homepage = "https://github.com/gpaulissen/ofxstatement-dutch"
 
 [project.scripts]
-nl-degiro = "ofxstatement.plugins.nl.degiro:Plugin"
-nl-icscards = "ofxstatement.plugins.nl.icscards:Plugin"
-nl-ing = "ofxstatement.plugins.nl.ing:Plugin"
-nl-knab = "ofxstatement.plugins.nl.knab:Plugin"
-nl-asn = "ofxstatement.plugins.nl.asn:Plugin"
+nl-degiro = "ofxstatement_dutch.degiro:Plugin"
+nl-icscards = "ofxstatement_dutch.icscards:Plugin"
+nl-ing = "ofxstatement_dutch.ing:Plugin"
+nl-knab = "ofxstatement_dutch.knab:Plugin"
+nl-asn = "ofxstatement_dutch.asn:Plugin"
 
 [project.optional-dependencies]
 dev = [
