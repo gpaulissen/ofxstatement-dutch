@@ -1,20 +1,64 @@
-
 [project]
 name = "ofxstatement-dutch"
 version = "1.8.0"
-description = "ofxstatement plugin for dutch financial institutions"
-authors = [
-    {name = "Gert-Jan Paulissen", email = "12508981+gpaulissen@users.noreply.github.com"},
+authors = [{name = "Gert-Jan Paulissen", email = "12508981+gpaulissen@users.noreply.github.com"}]
+license = "GPL-3.0-or-later"
+description = "OFXStatement plugin for dutch financial institutions like DEGIRO, ICSCards, ING, KNAB and ASN."
+keywords = [
+    "ofx",
+    "banking",
+    "statement",
+    "beancount",
+    "degiro",
+    "ing",
+    "icscards",
+    "knab",
 ]
-dependencies = []
+classifiers = [
+    "Development Status :: 6 - Mature",
+    "Programming Language :: Python :: 3",
+    "Natural Language :: English",
+    "Topic :: Office/Business :: Financial :: Accounting",
+    "Topic :: Utilities",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+]
+dependencies = ["ofxstatement>0.6.4"]
 requires-python = ">=3.6"
 readme = "README.md"
-license = {text = "GPLv3"}
 
 [build-system]
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
+[project.urls]
+Homepage = "https://github.com/gpaulissen/ofxstatement-dutch"
 
-[tool.pdm]
-distribution = true
+[project.scripts]
+nl-degiro = "ofxstatement.plugins.nl.degiro:Plugin"
+nl-icscards = "ofxstatement.plugins.nl.icscards:Plugin"
+nl-ing = "ofxstatement.plugins.nl.ing:Plugin"
+nl-knab = "ofxstatement.plugins.nl.knab:Plugin"
+nl-asn = "ofxstatement.plugins.nl.asn:Plugin"
+
+[project.optional-dependencies]
+tests = [
+    "pyyaml",
+    "pytest",
+    "pytest-cache",
+    "pytest-cover",
+    "pytest-flakes",
+    "pytest-pycodestyle",
+    "flake8",
+]
+
+[tool.setuptools]
+zip-safe = true
+include-package-data = true
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]

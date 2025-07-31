@@ -5,6 +5,7 @@ PROJECT            := ofxstatement-dutch
 ABOUT_PY 	         := __about__.py
 BRANCH 	           := master
 
+PYTHON             := python
 GIT                := git
 # least important first (can not stop easily in foreach)
 PYTHON_EXECUTABLES := python python3 
@@ -39,23 +40,6 @@ GREP := grep
 EXE := 
 endif
 
-ifdef CONDA_PREFIX
-home = $(subst \,/,$(CONDA_PREFIX))
-else
-home = $(HOME)
-endif
-
-ifdef CONDA_PYTHON_EXE
-# look no further
-PYTHON := $(subst \,/,$(CONDA_PYTHON_EXE))
-else
-# On Windows those executables may exist but not functional yet (can be used to install) so use Python -V
-$(foreach e,$(PYTHON_EXECUTABLES),$(if $(shell ${e}${EXE} -V 3>${DEVNUL}),$(eval PYTHON := ${e}${EXE}),))
-endif
-
-ifndef PYTHON
-$(error Could not find any Python executable from ${PYTHON_EXECUTABLES}.)
-endif
 
 .PHONY: clean install test dist upload_test upload tag
 
@@ -72,7 +56,7 @@ install: clean ## Install the package to the Python installation path.
 test: ## Test the package.
 	$(PIP) install -r test_requirements.txt
 	$(MYPY) --show-error-codes src
-	$(PYTHON) -m pytest $(PYTEST_OPTIONS) src
+	$(PYTHON) -m pytest $(PYTEST_OPTIONS) tests
 
 dist: install test ## Prepare the distribution the package by installing and testing it.
 	$(PYTHON) setup.py sdist bdist_wheel
