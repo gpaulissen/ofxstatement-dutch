@@ -215,12 +215,11 @@ EUR,"13,87",
         adjust_statement_line(stmt_line, self.unique_id_set)
 
         # Product known?
-        if line[self.mappings["memo"] - 2]:  # pragma: no cover
-            if stmt_line.memo:
-                stmt_line.memo += " " + line[self.mappings["memo"] - 2]
-                # ISIN known?
-                if line[self.mappings["memo"] - 1]:
-                    stmt_line.memo += " (" + line[self.mappings["memo"] - 1] + ")"
+        if line[self.mappings["memo"] - 2] and stmt_line.memo:  # pragma: no cover
+            stmt_line.memo += " " + line[self.mappings["memo"] - 2]
+            # ISIN known?
+            if line[self.mappings["memo"] - 1]:
+                stmt_line.memo += " (" + line[self.mappings["memo"] - 1] + ")"
 
         return stmt_line
 
@@ -232,7 +231,6 @@ class Plugin(BasePlugin):
     """DEGIRO trader platform, The Netherlands, CSV (https://www.degiro.nl/)"""
 
     def get_parser(self, f: str) -> Parser:
-        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
         try:
             account_id = self.settings["account_id"]
         except Exception:
@@ -247,4 +245,8 @@ $ ofxstatement edit-config
 for more information.
 """
             ) from None
-        return Parser(fin, account_id)
+        if isinstance(f, str):
+            with open(f, "r", encoding="ISO-8859-1") as fin:
+                return Parser(fin, account_id)
+        else:
+            return Parser(f, account_id)
