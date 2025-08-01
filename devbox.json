@@ -9,7 +9,6 @@
     "shell": {
         "scripts": {
             "init": [
-                "pixi self-update",
                 "pixi install --all"
             ],
             "init-dev": [
