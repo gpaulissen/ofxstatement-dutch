@@ -18,3 +18,5 @@ htmlcov
 tests/samples/textrepl.dat
 .pdm-python
 pdm.lock
+# pixi environments
+.pixi
