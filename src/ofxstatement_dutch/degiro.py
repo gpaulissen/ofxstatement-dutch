@@ -250,8 +250,7 @@ $ ofxstatement edit-config
 for more information.
 """
             ) from e
-        if isinstance(f, str):
-            with open(f, "r", encoding="ISO-8859-1") as fin:
-                return Parser(fin, account_id)
-        else:
-            return Parser(f, account_id)
+        # Do not use with to prevent: ValueError: I/O operation on closed file.
+        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
+        return Parser(fin, account_id)
+

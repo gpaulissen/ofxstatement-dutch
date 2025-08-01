@@ -290,5 +290,6 @@ class Plugin(BasePlugin):
         account_id: Optional[str] = None
         if m:
             account_id = m.group(1)
-        with open(filename, "r") as fin:  # , encoding="ISO-8859-1")
-            return Parser(fin, account_id)
+        # Do not use with to prevent: ValueError: I/O operation on closed file.
+        fin = open(filename, "r")  # , encoding="ISO-8859-1")
+        return Parser(fin, account_id)

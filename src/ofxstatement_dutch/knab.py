@@ -253,8 +253,6 @@ class Plugin(BasePlugin):
     """KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)"""
 
     def get_parser(self, f: str) -> Parser:
-        if isinstance(f, str):
-            with open(f, "r", encoding="ISO-8859-1") as fin:
-                return Parser(fin)
-        else:
-            return Parser(f)
+        # Do not use with to prevent: ValueError: I/O operation on closed file.
+        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
+        return Parser(fin)

@@ -12,6 +12,7 @@ from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.statement import (
     BankAccount,
     StatementLine,
+    recalculate_balance,
 )
 from ofxstatement.statement import (
     Statement as BaseStatement,
@@ -174,7 +175,7 @@ class Parser(CsvStatementParser):
         """
 
         # Python 3 needed
-        stmt: Optional[BaseStatement] = super().parse()
+        stmt: BaseStatement = super().parse()
 
         _assert(stmt is not None)
 
@@ -183,23 +184,25 @@ class Parser(CsvStatementParser):
         except Exception as e:
             raise ParseError(0, str(e)) from e
 
+        # lines: List["StatementLine"] = getattr(stmt, "lines") if hasattr(stmt, "lines") else getattr(BaseStatement, "lines")
+
         if self.header_idx == 0:
             # GJP 2020-03-03
             # No need to (re)calculate the balance since there is no history.
             # But set the dates.
-            BaseStatement.start_balance = BaseStatement.end_balance = None
+            stmt.start_balance = stmt.end_balance = None
             stmt.start_date = min(sl.date for sl in stmt.lines if sl.date)
             # end date is exclusive for OFX
             stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
             stmt.end_date += datetime.timedelta(days=1)
         elif self.header_idx == 1:
+            recalculate_balance(stmt)
             stmt.start_date = stmt.start_balance = None
-            stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
-            _assert(stmt.lines[0].date == stmt.end_date or stmt.lines[-1].date == stmt.end_date)
             end_idx: int = 0 if stmt.lines[0].date == stmt.end_date else -1
             stmt.end_balance = stmt.lines[end_idx].amount
             # end date is exclusive for OFX
-            stmt.end_date += datetime.timedelta(days=1)
+            if stmt.end_date is not None:
+                stmt.end_date += datetime.timedelta(days=1)
             # no transaction lines
             stmt.lines = []
 
@@ -312,9 +315,10 @@ this line's account: {}".format(self.statement.account_id, line[2]),
 
         _assert(stmt_line is not None)
 
-        stmt_line.trntype = "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
-        stmt_line.id = "1"
-        adjust_statement_line(stmt_line, self.unique_id_set)
+        StatementLine.trntype = "DEBIT" if hasattr(StatementLine, "amount") and getattr(StatementLine, "amount") < 0 else "CREDIT"
+        StatementLine.id = "1"
+        if stmt_line:
+            adjust_statement_line(stmt_line, self.unique_id_set)
         return stmt_line
 
 
@@ -327,5 +331,6 @@ class Plugin(BasePlugin):
         account_id: Optional[str] = None
         if m:
             account_id = m.group(0)
-        with open(filename, "r", encoding="ISO-8859-1") as fin:
-            return Parser(fin, account_id)
+        # Do not use with to prevent: ValueError: I/O operation on closed file.
+        fin = open(filename, "r", encoding="ISO-8859-1")
+        return Parser(fin, account_id)

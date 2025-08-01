@@ -18,7 +18,7 @@ def _assert(condition: bool, error_message: str = "Programming error") -> None:
         raise AssertionError(error_message)
 
 
-def _to_date(d_t: Union[date, datetime]) -> date:
+def _to_date(d_t: Optional[Union[date, datetime]]) -> Optional[date]:
     return d_t.date() if isinstance(d_t, datetime) else d_t
 
 
@@ -41,13 +41,13 @@ class Statement(BaseStatement):
             # An ING CSV may be a balance file resulting in 0 lines
             if len(dates) == 0:
                 return
-            _assert(self.start_date, "The statement start date should be set")
-            _assert(self.end_date, "The statement end date should be set")
+            _assert(self.start_date is not None, "The statement start date should be set")
+            _assert(self.end_date is not None, "The statement end date should be set")
             # check self.start_date
             min_date = _to_date(min(dates))
             start_date = _to_date(self.start_date)
             _assert(
-                start_date and min_date and start_date <= min_date,
+                start_date is not None and min_date is not None and start_date <= min_date,
                 "The statement start date ({}) should at most be the smallest \
 statement line date ({})".format(start_date, min_date),
             )
@@ -55,7 +55,7 @@ statement line date ({})".format(start_date, min_date),
             max_date = _to_date(max(dates))
             end_date = _to_date(self.end_date)
             _assert(
-                end_date and max_date and end_date > max_date,
+                end_date is not None and max_date is not None and end_date > max_date,
                 "The statement end date ({}) should be greater than the \
 largest statement line date ({})".format(end_date, max_date),
             )
@@ -70,11 +70,11 @@ def adjust_statement_line(statement_line: BaseStatementLine, unique_id_set: Set[
     statement_line.id = generate_unique_transaction_id(statement_line, unique_id_set)
     m = re.match(r"([0-9a-f]+)(-\d+)?$", statement_line.id)
     _assert(
-        m,
+        m is not None,
         "Id should match hexadecimal digits, \
 optionally followed by a minus and a counter: '{}'".format(statement_line.id),
     )
-    if m.group(2):
+    if m is not None and m.group(2):
         counter = int(m.group(2)[1:])
         # include counter so the memo gets unique
         statement_line.memo = statement_line.memo + " #" + str(counter + 1)  # type: ignore

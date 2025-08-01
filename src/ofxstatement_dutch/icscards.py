@@ -79,9 +79,10 @@ class Parser(BaseStatementParser):  # type: ignore
         # Since April 2025 it may be €1.827,97 as well
         m = re.search(r"^(\S+\s|\D)?([0-9,.]+)$", amount_in)
         _assert(m is not None)
-        amount_out = m.group(2)
-        if amount_out[-3] == ",":
-            amount_out = amount_out.replace(".", "").replace(",", ".")
+        if m:
+            amount_out = m.group(2)
+            if amount_out[-3] == ",":
+                amount_out = amount_out.replace(".", "").replace(",", ".")
 
         # convert to str to keep just the last two decimals
         amount_out = sign_out * Decimal(str(amount_out))
@@ -217,12 +218,12 @@ class Parser(BaseStatementParser):  # type: ignore
 
         def get_date(d_m: str) -> Optional[datetime]:
             # Without a year it will be 1900 so add the year
-            _assert(self.statement.end_date and self.statement.end_date.year)
+            _assert(self.statement.end_date is not None and self.statement.end_date.year is not None)
             # GJP 2025-07-31 Sometimes abbreviated months will be displayed with a period, sometimes without
             format = "%d %b %Y"
             dt: Optional[datetime]
             for period in ["", "."]:
-                d_m_y = "{}{} {}".format(d_m, period, self.statement.end_date.year)
+                d_m_y = "{}{} {}".format(d_m, period, getattr(self.statement.end_date, "year"))
                 try:
                     dt = datetime.strptime(d_m_y, format)
                     break  # all is well
@@ -238,9 +239,9 @@ class Parser(BaseStatementParser):  # type: ignore
                         raise e
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
-            if dt and dt > self.statement.end_date:
+            if dt and dt > getattr(self.statement, "end_date"):
                 dt = add_years(dt, -1)
-            _assert(dt is None or dt <= self.statement.end_date)
+            _assert(dt is None or dt <= getattr(self.statement, "end_date"))
             return dt
 
         logger.debug("parse_record(%s)", str(row))
@@ -289,8 +290,8 @@ class Plugin(BasePlugin):
         # Is it a PDF or an already converted file?
         try:
             fh = io.StringIO(check_output(pdftotext).decode())
-            return self.get_file_object_parser(fh)
             # No exception: apparently it is a PDF.
         except CalledProcessError:
-            with open(filename, "r") as fh:
-                return self.get_file_object_parser(fh)
+            # Do not use with to prevent: ValueError: I/O operation on closed file.
+            fh = open(filename, "r")
+        return self.get_file_object_parser(fh)

@@ -110,7 +110,7 @@ target-version = "py38"
 
 select = ["E", "F", "I"]
 extend-select = ["E4", "E7", "E9", "W", "S", "B", "SIM"]
-ignore = ["B009", "B010", "S603"] # List any rules to be ignored, currently empty.
+ignore = ["B009", "B010", "S603", "SIM115"] # List any rules to be ignored
 
 # Allow auto-fixing of all enabled rules when using the `--fix` option.
 fixable = ["ALL"]

@@ -22,8 +22,12 @@
                 "git clean -d -x -i"
             ],
             "test": [
+                "devbox run test-ruff",
                 "devbox run test-mypy",
                 "devbox run test-pytest"
+            ],
+            "test-ruff": [
+                "devbox run check"
             ],
             "test-mypy": [
                 "mypy --show-error-codes src"
