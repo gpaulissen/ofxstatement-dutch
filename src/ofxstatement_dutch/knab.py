@@ -227,8 +227,7 @@ this line's account: {}".format(self.statement.account_id, line[self.ACCOUNT]),
             # Python 3 needed
             stmt_line: Optional[StatementLine] = super().parse_record(line)
 
-            if stmt_line is None:
-                return None
+            if stmt_line is None: return None  # So code coverage will not complain
 
             # Remove zero-value notifications
             if stmt_line.amount == 0:

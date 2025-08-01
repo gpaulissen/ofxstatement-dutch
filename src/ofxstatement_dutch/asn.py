@@ -22,8 +22,7 @@ from ofxstatement_dutch.statement import Statement
 
 
 def _assert(condition: bool, error_message: str = "Programming error") -> None:
-    if not (condition):
-        raise AssertionError(error_message)
+    if not (condition): raise AssertionError(error_message)  # So code coverage will not complain
 
 
 # Need Python 3 for super() syntax

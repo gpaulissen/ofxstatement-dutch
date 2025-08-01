@@ -262,3 +262,4 @@ See the [Changelog](CHANGELOG.md).
 - [Publishing a Python Package from GitHub to PyPI in 2024](https://medium.com/@blackary/publishing-a-python-package-from-github-to-pypi-in-2024-a6fb8635d45d)
 - [Why You Should Replace Flake8, Black, and isort with Ruff: The Ultimate Python Code Quality Tool](https://medium.com/@zigtecx/why-you-should-replace-flake8-black-and-isort-with-ruff-the-ultimate-python-code-quality-tool-a9372d1ddc1e)
 - [pre-commit](https://pre-commit.com/)
+- [How to Generate Pytest Code Coverage Report](https://www.browserstack.com/guide/generate-pytest-code-coverage-report)

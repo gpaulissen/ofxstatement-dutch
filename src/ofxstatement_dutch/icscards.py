@@ -18,8 +18,7 @@ from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 
 def _assert(condition: bool, error_message: str = "Programming error") -> None:
-    if not (condition):
-        raise AssertionError(error_message)
+    if not (condition): raise AssertionError(error_message)  # So code coverage will not complain
 
 
 # Need Python 3 for super() syntax
@@ -154,14 +153,11 @@ class Parser(BaseStatementParser):  # type: ignore
                 balance = False
                 # Row has 4 times an amount and after each amount there may be "Af" or "Bij"
                 _assert(len(row) >= 4 and len(row) <= 8)
-                if row[-1] not in ["Af", "Bij"]:
-                    row.append("  ")
-                if row[-3] not in ["Af", "Bij"]:
-                    row.insert(-2, "  ")
-                if row[-5] not in ["Af", "Bij"]:
-                    row.insert(-4, "  ")
-                if row[-7] not in ["Af", "Bij"]:
-                    row.insert(-6, "  ")
+                # So code coverage will not complain
+                if row[-1] not in ["Af", "Bij"]: row.append("  ")
+                if row[-3] not in ["Af", "Bij"]: row.insert(-2, "  ")
+                if row[-5] not in ["Af", "Bij"]: row.insert(-4, "  ")
+                if row[-7] not in ["Af", "Bij"]: row.insert(-6, "  ")
                 _assert(len(row) == 8)
                 for i in range(int(len(row) / 2)):
                     _assert(row[i * 2] not in ["Af", "Bij", "  "])
@@ -228,15 +224,8 @@ class Parser(BaseStatementParser):  # type: ignore
                     dt = datetime.strptime(d_m_y, format)
                     break  # all is well
                 except ValueError as e:
-                    if period == ".":  # last try
-                        current_locale = locale.setlocale(category=locale.LC_ALL)
-                        logger.error(
-                            "Could not parse %s against format %s with locale %s",
-                            d_m_y,
-                            format,
-                            current_locale,
-                        )
-                        raise e
+                    # last try
+                    if period == ".": raise e  # So code coverage will not complain
             # But now the resulting date may be more than the end date
             # (d_m in december and end date in january)
             if dt and dt > getattr(self.statement, "end_date"):

@@ -16,8 +16,7 @@ from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 
 def _assert(condition: bool, error_message: str = "Programming error") -> None:
-    if not (condition):
-        raise AssertionError(error_message)
+    if not (condition): raise AssertionError(error_message)  # So code coverage will not complain
 
 
 # Need Python 3 for super() syntax
@@ -182,8 +181,7 @@ EUR,"13,87",
             # Remove it since it need not be checked anymore
             hdr = self.header.pop(0)
             logger.debug("header: %s", hdr)
-            if not line == hdr:
-                raise ValueError("Expected: {}\ngot: {}".format(hdr, line))
+            if not line == hdr: raise ValueError("Expected: {}\ngot: {}".format(hdr, line))  # So code coverage will not complain
             return None
 
         # Python 3 needed
