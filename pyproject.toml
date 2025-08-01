@@ -91,7 +91,7 @@ exclude = [
 ]
 
 # Set the maximum line length to 200 characters.
-line-length = 200
+line-length = 210
 
 # Define the number of spaces used for indentation, aligning with Black's style.
 indent-width = 4
@@ -100,16 +100,15 @@ indent-width = 4
 # like rewriting type annotations
 target-version = "py38"
 
+[tool.ruff.lint]
 # Enable Pyflakes (F) and a subset of the pycodestyle (E) codes by default.
 # Enable the isort rules (I) to replace isort
-select = ["E", "F", "I"]
-
-[tool.ruff.lint]
 # pycodestyle warnings (W)
 # Activate Security Rules (S) to replace bandit
 # flake8-bugbear (B)
 # flake8-simplify (SIM)
 
+select = ["E", "F", "I"]
 extend-select = ["E4", "E7", "E9", "W", "S", "B", "SIM"]
 ignore = ["B009", "B010", "S603"] # List any rules to be ignored, currently empty.
 

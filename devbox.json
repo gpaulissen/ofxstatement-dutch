@@ -42,6 +42,10 @@
             ],
             "pre-commit": [
                 "pre-commit run --all-files"
+            ],
+            "sort": [
+                "ruff check --select I --fix .",
+                "ruff format ."
             ]
         }
     }
