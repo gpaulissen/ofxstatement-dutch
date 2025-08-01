@@ -16,7 +16,8 @@ from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 
 def _assert(condition: bool, error_message: str = "Programming error") -> None:
-    if not (condition): raise AssertionError(error_message)  # So code coverage will not complain
+    if not (condition):  # pragma: no cover
+        raise AssertionError(error_message)
 
 
 # Need Python 3 for super() syntax
@@ -181,7 +182,8 @@ EUR,"13,87",
             # Remove it since it need not be checked anymore
             hdr = self.header.pop(0)
             logger.debug("header: %s", hdr)
-            if not line == hdr: raise ValueError("Expected: {}\ngot: {}".format(hdr, line))  # So code coverage will not complain
+            if not line == hdr:  # pragma: no cover
+                raise ValueError("Expected: {}\ngot: {}".format(hdr, line))
             return None
 
         # Python 3 needed
@@ -251,4 +253,3 @@ for more information.
         # Do not use with to prevent: ValueError: I/O operation on closed file.
         fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
         return Parser(fin, account_id)
-
