@@ -178,9 +178,7 @@ class Parser(CsvStatementParser):
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ASN Bank
-        self.statement = Statement(
-            bank_id="ASNBNL21", account_id=account_id, currency="EUR"
-        )  # My Statement
+        self.statement = Statement(bank_id="ASNBNL21", account_id=account_id, currency="EUR")  # My Statement
 
     def parse(self) -> BaseStatement:
         """Main entry point for parsers
@@ -241,9 +239,7 @@ this line's account: {}".format(self.statement.account_id, line[1])
             self.statement.account_id = line[1]
 
         if line[self.mappings["bank_account_to"]]:
-            line[self.mappings["payee"]] = "{} ({})".format(
-                line[self.mappings["payee"]], line[self.mappings["bank_account_to"]]
-            )
+            line[self.mappings["payee"]] = "{} ({})".format(line[self.mappings["payee"]], line[self.mappings["bank_account_to"]])
         else:
             line[self.mappings["payee"]] = ""
 
@@ -265,16 +261,10 @@ this line's account: {}".format(self.statement.account_id, line[1])
             raise ValueError("Journaaldatum is not found")
 
         dd_mm_yyyy: str = str(line[self.mappings["date"]])
-        stmt_line.id = "{}{}{}.{}".format(
-            dd_mm_yyyy[6:], dd_mm_yyyy[3:5], dd_mm_yyyy[0:2], line[transaction_nr]
-        )
+        stmt_line.id = "{}{}{}.{}".format(dd_mm_yyyy[6:], dd_mm_yyyy[3:5], dd_mm_yyyy[0:2], line[transaction_nr])
 
         # We can not use stmt_line.start_balance since that does not exist
-        stmt_line.start_balance = (
-            Decimal(str(line[start_balance]))
-            if line[start_balance] is not None
-            else Decimal(0)
-        )
+        stmt_line.start_balance = Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0)
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"
@@ -282,9 +272,7 @@ this line's account: {}".format(self.statement.account_id, line[1])
             stmt_line.trntype = "CREDIT"
 
         if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
-            stmt_line.bank_account_to = BankAccount(
-                bank_id="", acct_id=stmt_line.bank_account_to
-            )
+            stmt_line.bank_account_to = BankAccount(bank_id="", acct_id=stmt_line.bank_account_to)
         else:
             stmt_line.bank_account_to = None
 
