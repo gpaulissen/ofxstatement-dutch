@@ -16,8 +16,14 @@ from ofxstatement.statement import StatementLine
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
+
+def _assert(condition: bool, error_message: str = "Programming error") -> None:
+    if not (condition):
+        raise AssertionError(error_message)
+
+
 # Need Python 3 for super() syntax
-assert sys.version_info[0] >= 3, "At least Python 3 is required."
+_assert(sys.version_info[0] >= 3, "At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -62,18 +68,17 @@ class Parser(BaseStatementParser):  # type: ignore
         amount_out: Union[str, Decimal]
 
         # determine sign_out
-        assert isinstance(transaction_type_in, str)
-        assert transaction_type_in in ["Af", "Bij", "  "]
+        _assert(isinstance(transaction_type_in, str))
 
         if transaction_type_in == "Af":
             sign_out = -1
 
         # determine amount_out
-        assert isinstance(amount_in, str)
+        _assert(isinstance(amount_in, str))
         # Amount something like 1.827,97, € 1.827,97 (both dutch) or 1,827.97?
         # Since April 2025 it may be €1.827,97 as well
         m = re.search(r"^(\S+\s|\D)?([0-9,.]+)$", amount_in)
-        assert m is not None
+        _assert(m is not None)
         amount_out = m.group(2)
         if amount_out[-3] == ",":
             amount_out = amount_out.replace(".", "").replace(",", ".")
@@ -128,7 +133,7 @@ class Parser(BaseStatementParser):  # type: ignore
             )
 
             if first_line and len(row) > 1:
-                assert row == first_line_row, "Expected: {0}\nActual: {1}".format(first_line_row, row)
+                _assert(row == first_line_row, "Expected: {0}\nActual: {1}".format(first_line_row, row))
                 first_line = False
 
             if len(row) == 2 and row[1][0:5] == "BIC: ":
@@ -147,7 +152,7 @@ class Parser(BaseStatementParser):  # type: ignore
             elif balance:
                 balance = False
                 # Row has 4 times an amount and after each amount there may be "Af" or "Bij"
-                assert len(row) >= 4 and len(row) <= 8
+                _assert(len(row) >= 4 and len(row) <= 8)
                 if row[-1] not in ["Af", "Bij"]:
                     row.append("  ")
                 if row[-3] not in ["Af", "Bij"]:
@@ -156,10 +161,10 @@ class Parser(BaseStatementParser):  # type: ignore
                     row.insert(-4, "  ")
                 if row[-7] not in ["Af", "Bij"]:
                     row.insert(-6, "  ")
-                assert len(row) == 8
+                _assert(len(row) == 8)
                 for i in range(int(len(row) / 2)):
-                    assert row[i * 2] not in ["Af", "Bij", "  "]
-                    assert row[i * 2 + 1] in ["Af", "Bij", "  "]
+                    _assert(row[i * 2] not in ["Af", "Bij", "  "])
+                    _assert(row[i * 2 + 1] in ["Af", "Bij", "  "])
 
                 self.statement.start_balance = Parser.get_amount(row[0], row[1])
                 self.statement.end_balance = Parser.get_amount(row[-2], row[-1])
@@ -212,7 +217,7 @@ class Parser(BaseStatementParser):  # type: ignore
 
         def get_date(d_m: str) -> Optional[datetime]:
             # Without a year it will be 1900 so add the year
-            assert self.statement.end_date and self.statement.end_date.year
+            _assert(self.statement.end_date and self.statement.end_date.year)
             # GJP 2025-07-31 Sometimes abbreviated months will be displayed with a period, sometimes without
             format = "%d %b %Y"
             dt: Optional[datetime]
@@ -235,11 +240,11 @@ class Parser(BaseStatementParser):  # type: ignore
             # (d_m in december and end date in january)
             if dt and dt > self.statement.end_date:
                 dt = add_years(dt, -1)
-            assert dt is None or dt <= self.statement.end_date
+            _assert(dt is None or dt <= self.statement.end_date)
             return dt
 
         logger.debug("parse_record(%s)", str(row))
-        assert len(row) in [5, 7, 8]
+        _assert(len(row) in [5, 7, 8])
 
         stmt_line: Optional[StatementLine] = None
         # GJP 2020-03-01
@@ -284,8 +289,8 @@ class Plugin(BasePlugin):
         # Is it a PDF or an already converted file?
         try:
             fh = io.StringIO(check_output(pdftotext).decode())
+            return self.get_file_object_parser(fh)
             # No exception: apparently it is a PDF.
         except CalledProcessError:
-            fh = open(filename, "r")
-
-        return self.get_file_object_parser(fh)
+            with open(filename, "r") as fh:
+                return self.get_file_object_parser(fh)

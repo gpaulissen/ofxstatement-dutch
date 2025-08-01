@@ -18,8 +18,14 @@ from ofxstatement.statement import (
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
+
+def _assert(condition: bool, error_message: str = "Programming error") -> None:
+    if not (condition):
+        raise AssertionError(error_message)
+
+
 # Need Python 3 for super() syntax
-assert sys.version_info[0] >= 3, "At least Python 3 is required."
+_assert(sys.version_info[0] >= 3, "At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -152,12 +158,12 @@ Boekdatum;
         stmt: BaseStatement = super().parse()
 
         try:
-            assert len(self.header) == 0, "Header not completely read: {}".format(str(self.header))
+            _assert(len(self.header) == 0, "Header not completely read: {}".format(str(self.header)))
         except Exception as e:
-            raise ParseError(0, str(e))
+            raise ParseError(0, str(e)) from e
 
         try:
-            assert len(stmt.lines) > 0, "No statement lines read"
+            _assert(len(stmt.lines) > 0, "No statement lines read")
 
             # GJP 2020-03-03
             # No need to (re)calculate the balance since there is no history.
@@ -172,7 +178,7 @@ Boekdatum;
                 stmt.end_date = max_date
                 stmt.end_date += datetime.timedelta(days=1)
         except Exception as e:
-            raise ValidationError(str(e), stmt)
+            raise ValidationError(str(e), stmt) from e
 
         return stmt
 
@@ -197,17 +203,20 @@ Boekdatum;
                 hdr = self.header.pop(0)
                 line = list(filter(None, line))
                 logger.debug("header: %s", hdr)
-                assert line == hdr, "Expected: {}\ngot: {}".format(hdr, line)
+                _assert(line == hdr, "Expected: {}\ngot: {}".format(hdr, line))
                 return None
 
             # line[self.ACCOUNT] contains the account number
             if self.statement.account_id:
-                assert self.statement.account_id == line[self.ACCOUNT], "Only one account is allowed; previous account: {}, \
-this line's account: {}".format(self.statement.account_id, line[self.ACCOUNT])
+                _assert(
+                    self.statement.account_id == line[self.ACCOUNT],
+                    "Only one account is allowed; previous account: {}, \
+this line's account: {}".format(self.statement.account_id, line[self.ACCOUNT]),
+                )
             else:
                 self.statement.account_id = line[self.ACCOUNT]
 
-            assert line[self.CD] in ["D", "C"], "Element {} is not D/C in line {}".format(self.CD, str(line))
+            _assert(line[self.CD] in ["D", "C"], "Element {} is not D/C in line {}".format(self.CD, str(line)))
 
             if line[self.CD] == "D":
                 line[self.mappings["amount"]] = "-" + line[self.mappings["amount"]]
@@ -235,7 +244,7 @@ this line's account: {}".format(self.statement.account_id, line[self.ACCOUNT])
             if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
                 stmt_line.bank_account_to = BankAccount(bank_id="", acct_id=stmt_line.bank_account_to)
         except Exception as e:
-            raise ParseError(self.cur_record, str(e))
+            raise ParseError(self.cur_record, str(e)) from e
 
         return stmt_line
 
@@ -244,5 +253,8 @@ class Plugin(BasePlugin):
     """KNAB Online Bank, The Netherlands, CSV (https://www.knab.nl/)"""
 
     def get_parser(self, f: str) -> Parser:
-        fin = open(f, "r", encoding="ISO-8859-1") if isinstance(f, str) else f
-        return Parser(fin)
+        if isinstance(f, str):
+            with open(f, "r", encoding="ISO-8859-1") as fin:
+                return Parser(fin)
+        else:
+            return Parser(f)

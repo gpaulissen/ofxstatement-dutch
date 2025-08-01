@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
+def _assert(condition: bool, error_message: str = "Programming error") -> None:
+    if not (condition):
+        raise AssertionError(error_message)
+
+
 def _to_date(d_t: Union[date, datetime]) -> date:
     return d_t.date() if isinstance(d_t, datetime) else d_t
 
@@ -36,20 +41,26 @@ class Statement(BaseStatement):
             # An ING CSV may be a balance file resulting in 0 lines
             if len(dates) == 0:
                 return
-            assert self.start_date, "The statement start date should be set"
-            assert self.end_date, "The statement end date should be set"
+            _assert(self.start_date, "The statement start date should be set")
+            _assert(self.end_date, "The statement end date should be set")
             # check self.start_date
             min_date = _to_date(min(dates))
             start_date = _to_date(self.start_date)
-            assert start_date and min_date and start_date <= min_date, "The statement start date ({}) should at most be the smallest \
-statement line date ({})".format(start_date, min_date)
+            _assert(
+                start_date and min_date and start_date <= min_date,
+                "The statement start date ({}) should at most be the smallest \
+statement line date ({})".format(start_date, min_date),
+            )
             # check self.end_date
             max_date = _to_date(max(dates))
             end_date = _to_date(self.end_date)
-            assert end_date and max_date and end_date > max_date, "The statement end date ({}) should be greater than the \
-largest statement line date ({})".format(end_date, max_date)
+            _assert(
+                end_date and max_date and end_date > max_date,
+                "The statement end date ({}) should be greater than the \
+largest statement line date ({})".format(end_date, max_date),
+            )
         except Exception as e:
-            raise ValidationError(str(e), self)
+            raise ValidationError(str(e), self) from e
 
 
 def adjust_statement_line(statement_line: BaseStatementLine, unique_id_set: Set[str]) -> None:
@@ -58,8 +69,11 @@ def adjust_statement_line(statement_line: BaseStatementLine, unique_id_set: Set[
 
     statement_line.id = generate_unique_transaction_id(statement_line, unique_id_set)
     m = re.match(r"([0-9a-f]+)(-\d+)?$", statement_line.id)
-    assert m, "Id should match hexadecimal digits, \
-optionally followed by a minus and a counter: '{}'".format(statement_line.id)
+    _assert(
+        m,
+        "Id should match hexadecimal digits, \
+optionally followed by a minus and a counter: '{}'".format(statement_line.id),
+    )
     if m.group(2):
         counter = int(m.group(2)[1:])
         # include counter so the memo gets unique

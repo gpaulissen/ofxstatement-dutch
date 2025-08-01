@@ -20,9 +20,14 @@ from ofxstatement.statement import (
 
 from ofxstatement_dutch.statement import Statement
 
+
+def _assert(condition: bool, error_message: str = "Programming error") -> None:
+    if not (condition):
+        raise AssertionError(error_message)
+
+
 # Need Python 3 for super() syntax
-if not sys.version_info[0] >= 3:
-    raise ValueError("At least Python 3 is required.")
+_assert(sys.version_info[0] >= 3, "At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -220,7 +225,7 @@ class Parser(CsvStatementParser):
             stmt_line = self.parse_transaction(line)
 
         except Exception as e:
-            raise ParseError(self.cur_record, str(e)) from None
+            raise ParseError(self.cur_record, str(e)) from e
 
         return stmt_line
 
@@ -252,13 +257,10 @@ this line's account: {}".format(self.statement.account_id, line[1])
 
         # The unique id is a combination of 'Journaaldatum' and 'Volgnummer transactie'
         # Let id be <Journaaldatum in yyyymmdd format>.<Volgnummer transactie>
-        if not self.mappings["date"] == 11:  # Journaaldatum
-            raise ValueError("Journaaldatum must be column 11")
-        if not transaction_nr == 15:  # Volgnummer transactie
-            raise ValueError(f"transaction_nr ({transaction_nr}) must be 15")
+        _assert(self.mappings["date"] == 11)  # Journaaldatum
+        _assert(transaction_nr == 15)  # Volgnummer transactie
 
-        if not line[self.mappings["date"]]:
-            raise ValueError("Journaaldatum is not found")
+        _assert(line[self.mappings["date"]] is not None)
 
         dd_mm_yyyy: str = str(line[self.mappings["date"]])
         stmt_line.id = "{}{}{}.{}".format(dd_mm_yyyy[6:], dd_mm_yyyy[3:5], dd_mm_yyyy[0:2], line[transaction_nr])

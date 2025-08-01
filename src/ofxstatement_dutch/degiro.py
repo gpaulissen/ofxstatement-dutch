@@ -14,9 +14,14 @@ from ofxstatement.statement import StatementLine
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
+
+def _assert(condition: bool, error_message: str = "Programming error") -> None:
+    if not (condition):
+        raise AssertionError(error_message)
+
+
 # Need Python 3 for super() syntax
-if not sys.version_info[0] >= 3:
-    raise ValueError("At least Python 3 is required.")
+_assert(sys.version_info[0] >= 3, "At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -147,7 +152,7 @@ EUR,"13,87",
             if not len(self.header) == 0:
                 raise ValueError("Header not completely read: {}".format(str(self.header)))
         except Exception as e:
-            raise ParseError(0, str(e)) from None
+            raise ParseError(0, str(e)) from e
 
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
@@ -233,7 +238,7 @@ class Plugin(BasePlugin):
     def get_parser(self, f: str) -> Parser:
         try:
             account_id = self.settings["account_id"]
-        except Exception:
+        except Exception as e:
             raise RuntimeError(
                 """
 Please define an 'account_id' in the ofxstatement configuration.
@@ -244,7 +249,7 @@ $ ofxstatement edit-config
 
 for more information.
 """
-            ) from None
+            ) from e
         if isinstance(f, str):
             with open(f, "r", encoding="ISO-8859-1") as fin:
                 return Parser(fin, account_id)

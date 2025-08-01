@@ -19,8 +19,14 @@ from ofxstatement.statement import (
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
+
+def _assert(condition: bool, error_message: str = "Programming error") -> None:
+    if not (condition):
+        raise AssertionError(error_message)
+
+
 # Need Python 3 for super() syntax
-assert sys.version_info[0] >= 3, "At least Python 3 is required."
+_assert(sys.version_info[0] >= 3, "At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -170,12 +176,12 @@ class Parser(CsvStatementParser):
         # Python 3 needed
         stmt: Optional[BaseStatement] = super().parse()
 
-        assert stmt is not None
+        _assert(stmt is not None)
 
         try:
-            assert self.header_idx >= 0 and self.header_idx < len(self.header), "Header not read: {}".format(str(self.header))
+            _assert(self.header_idx >= 0 and self.header_idx < len(self.header), "Header not read: {}".format(str(self.header)))
         except Exception as e:
-            raise ParseError(0, str(e))
+            raise ParseError(0, str(e)) from e
 
         if self.header_idx == 0:
             # GJP 2020-03-03
@@ -189,7 +195,7 @@ class Parser(CsvStatementParser):
         elif self.header_idx == 1:
             stmt.start_date = stmt.start_balance = None
             stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
-            assert stmt.lines[0].date == stmt.end_date or stmt.lines[-1].date == stmt.end_date
+            _assert(stmt.lines[0].date == stmt.end_date or stmt.lines[-1].date == stmt.end_date)
             end_idx: int = 0 if stmt.lines[0].date == stmt.end_date else -1
             stmt.end_balance = stmt.lines[end_idx].amount
             # end date is exclusive for OFX
@@ -241,7 +247,7 @@ class Parser(CsvStatementParser):
 
                 msg: str = "Line {} does not match\n\n{}\n\nnor\n\n{}\n\nnor\n\n{}\n"
 
-                assert self.header_idx in [0, 1], msg.format(line, self.header[0], self.header[1], self.header[2])
+                _assert(self.header_idx in [0, 1], msg.format(line, self.header[0], self.header[1], self.header[2]))
 
                 self.mappings = self.mappings_by_header[self.header_idx]
                 return None
@@ -254,19 +260,22 @@ class Parser(CsvStatementParser):
                 stmt_line = self.parse_balance(line)
 
         except Exception as e:
-            raise ParseError(self.cur_record, str(e))
+            raise ParseError(self.cur_record, str(e)) from e
 
         return stmt_line
 
     def parse_transaction(self, line: List[str]) -> Optional[StatementLine]:
         # line[2] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[2], "Only one account is allowed; previous account: {}, \
-this line's account: {}".format(self.statement.account_id, line[2])
+            _assert(
+                self.statement.account_id == line[2],
+                "Only one account is allowed; previous account: {}, \
+this line's account: {}".format(self.statement.account_id, line[2]),
+            )
         else:
             self.statement.account_id = line[2]
 
-        assert line[5] in ["Af", "Bij"]
+        _assert(line[5] in ["Af", "Bij"])
 
         if line[5] == "Af":
             amount: Optional[str] = line[self.mappings["amount"]]
@@ -301,7 +310,7 @@ this line's account: {}".format(self.statement.account_id, line[2])
         # Python 3 needed
         stmt_line: Optional[StatementLine] = super().parse_record(line)
 
-        assert stmt_line is not None
+        _assert(stmt_line is not None)
 
         stmt_line.trntype = "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
         stmt_line.id = "1"
@@ -318,5 +327,5 @@ class Plugin(BasePlugin):
         account_id: Optional[str] = None
         if m:
             account_id = m.group(0)
-        fin = open(filename, "r", encoding="ISO-8859-1")
-        return Parser(fin, account_id)
+        with open(filename, "r", encoding="ISO-8859-1") as fin:
+            return Parser(fin, account_id)
