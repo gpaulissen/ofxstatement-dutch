@@ -1,19 +1,20 @@
 # -*- coding: utf-8 -*-
-from typing import Set, Optional, List, Iterator, Any, Dict, TextIO
-
-import re
 import csv
-import sys
 import datetime
 import logging
+import re
+import sys
+from typing import Any, Dict, Iterator, List, Optional, Set, TextIO
 
-from ofxstatement.plugin import Plugin as BasePlugin
-from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
+from ofxstatement.parser import CsvStatementParser
+from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.statement import (
     BankAccount,
-    Statement as BaseStatement,
     StatementLine,
+)
+from ofxstatement.statement import (
+    Statement as BaseStatement,
 )
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
@@ -155,9 +156,7 @@ class Parser(CsvStatementParser):
         # Python 3 needed
         super().__init__(fin)
         # Use the BIC code for ING Netherlands
-        self.statement = Statement(
-            bank_id="INGBNL2A", account_id=account_id, currency="EUR"
-        )  # My Statement
+        self.statement = Statement(bank_id="INGBNL2A", account_id=account_id, currency="EUR")  # My Statement
         self.unique_id_set = set()
         self.header_idx = -1
 
@@ -174,9 +173,7 @@ class Parser(CsvStatementParser):
         assert stmt is not None
 
         try:
-            assert self.header_idx >= 0 and self.header_idx < len(self.header), (
-                "Header not read: {}".format(str(self.header))
-            )
+            assert self.header_idx >= 0 and self.header_idx < len(self.header), "Header not read: {}".format(str(self.header))
         except Exception as e:
             raise ParseError(0, str(e))
 
@@ -192,10 +189,7 @@ class Parser(CsvStatementParser):
         elif self.header_idx == 1:
             stmt.start_date = stmt.start_balance = None
             stmt.end_date = max(sl.date for sl in stmt.lines if sl.date)
-            assert (
-                stmt.lines[0].date == stmt.end_date
-                or stmt.lines[-1].date == stmt.end_date
-            )
+            assert stmt.lines[0].date == stmt.end_date or stmt.lines[-1].date == stmt.end_date
             end_idx: int = 0 if stmt.lines[0].date == stmt.end_date else -1
             stmt.end_balance = stmt.lines[end_idx].amount
             # end date is exclusive for OFX
@@ -225,9 +219,7 @@ class Parser(CsvStatementParser):
         stmt_line: Optional[StatementLine] = None
 
         try:
-            logger.debug(
-                "header idx: %d; line #%d: %s", self.header_idx, self.cur_record, line
-            )
+            logger.debug("header idx: %d; line #%d: %s", self.header_idx, self.cur_record, line)
 
             # First record(s) must be the header
 
@@ -240,10 +232,7 @@ class Parser(CsvStatementParser):
             # The extra column will be handled by
             # just comparing the first N header columns.
             if self.header_idx < 0:
-                if (
-                    line[0 : len(self.header[0])] == self.header[0]
-                    or line[0 : len(self.header[1])] == self.header[1]
-                ):
+                if line[0 : len(self.header[0])] == self.header[0] or line[0 : len(self.header[1])] == self.header[1]:
                     self.header_idx = 0
                     self.date_format = "%Y%m%d"
                 elif line[0 : len(self.header[-1])] == self.header[-1]:
@@ -252,9 +241,7 @@ class Parser(CsvStatementParser):
 
                 msg: str = "Line {} does not match\n\n{}\n\nnor\n\n{}\n\nnor\n\n{}\n"
 
-                assert self.header_idx in [0, 1], msg.format(
-                    line, self.header[0], self.header[1], self.header[2]
-                )
+                assert self.header_idx in [0, 1], msg.format(line, self.header[0], self.header[1], self.header[2])
 
                 self.mappings = self.mappings_by_header[self.header_idx]
                 return None
@@ -274,10 +261,8 @@ class Parser(CsvStatementParser):
     def parse_transaction(self, line: List[str]) -> Optional[StatementLine]:
         # line[2] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[2], (
-                "Only one account is allowed; previous account: {}, \
+            assert self.statement.account_id == line[2], "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id, line[2])
-            )
         else:
             self.statement.account_id = line[2]
 
@@ -285,18 +270,12 @@ this line's account: {}".format(self.statement.account_id, line[2])
 
         if line[5] == "Af":
             amount: Optional[str] = line[self.mappings["amount"]]
-            line[self.mappings["amount"]] = "-" + (
-                amount if isinstance(amount, str) else ""
-            )
+            line[self.mappings["amount"]] = "-" + (amount if isinstance(amount, str) else "")
 
         if line[self.mappings["bank_account_to"]]:
-            line[self.mappings["payee"]] = "{} ({})".format(
-                line[self.mappings["payee"]], line[self.mappings["bank_account_to"]]
-            )
+            line[self.mappings["payee"]] = "{} ({})".format(line[self.mappings["payee"]], line[self.mappings["bank_account_to"]])
         else:
-            line[self.mappings["memo"]] = "{}, {}".format(
-                line[self.mappings["payee"]], line[self.mappings["memo"]]
-            )
+            line[self.mappings["memo"]] = "{}, {}".format(line[self.mappings["payee"]], line[self.mappings["memo"]])
             line[self.mappings["payee"]] = ""
 
         # Python 3 needed
@@ -314,9 +293,7 @@ this line's account: {}".format(self.statement.account_id, line[2])
             stmt_line.trntype = "CREDIT"
 
         if isinstance(stmt_line.bank_account_to, str) and stmt_line.bank_account_to:
-            stmt_line.bank_account_to = BankAccount(
-                bank_id="", acct_id=stmt_line.bank_account_to
-            )
+            stmt_line.bank_account_to = BankAccount(bank_id="", acct_id=stmt_line.bank_account_to)
 
         return stmt_line
 
@@ -326,9 +303,7 @@ this line's account: {}".format(self.statement.account_id, line[2])
 
         assert stmt_line is not None
 
-        stmt_line.trntype = (
-            "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
-        )
+        stmt_line.trntype = "DEBIT" if stmt_line.amount and stmt_line.amount < 0 else "CREDIT"
         stmt_line.id = "1"
         adjust_statement_line(stmt_line, self.unique_id_set)
         return stmt_line

@@ -1,20 +1,22 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Any, TextIO
 import csv
-import sys
 import datetime
 import logging
+import sys
 from decimal import Decimal
+from typing import Any, Iterable, List, Optional, Set, TextIO
 
-from ofxstatement.plugin import Plugin as BasePlugin
-from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
-from ofxstatement.statement import Statement as BaseStatement, StatementLine
+from ofxstatement.parser import CsvStatementParser
+from ofxstatement.plugin import Plugin as BasePlugin
+from ofxstatement.statement import Statement as BaseStatement
+from ofxstatement.statement import StatementLine
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
 # Need Python 3 for super() syntax
-assert sys.version_info[0] >= 3, "At least Python 3 is required."
+if not sys.version_info[0] >= 3:
+    raise ValueError("At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -142,11 +144,10 @@ EUR,"13,87",
         stmt: BaseStatement = super().parse()
 
         try:
-            assert len(self.header) == 0, "Header not completely read: {}".format(
-                str(self.header)
-            )
+            if not len(self.header) == 0:
+                raise ValueError("Header not completely read: {}".format(str(self.header)))
         except Exception as e:
-            raise ParseError(0, str(e))
+            raise ParseError(0, str(e)) from None
 
         # GJP 2020-03-03
         # No need to (re)calculate the balance since there is no history.
@@ -169,16 +170,15 @@ EUR,"13,87",
     def parse_record(self, line: List[str]) -> Optional[StatementLine]:
         """Parse given transaction line and return StatementLine object"""
 
-        logger.debug(
-            "header count: %d; line #%d: %s", len(self.header), self.cur_record, line
-        )
+        logger.debug("header count: %d; line #%d: %s", len(self.header), self.cur_record, line)
 
         # First record(s) must be the header
         if len(self.header) >= 1:
             # Remove it since it need not be checked anymore
             hdr = self.header.pop(0)
             logger.debug("header: %s", hdr)
-            assert line == hdr, "Expected: {}\ngot: {}".format(hdr, line)
+            if not line == hdr:
+                raise ValueError("Expected: {}\ngot: {}".format(hdr, line))
             return None
 
         # Python 3 needed
@@ -236,7 +236,8 @@ class Plugin(BasePlugin):
         try:
             account_id = self.settings["account_id"]
         except Exception:
-            raise RuntimeError("""
+            raise RuntimeError(
+                """
 Please define an 'account_id' in the ofxstatement configuration.
 
 Run
@@ -244,5 +245,6 @@ Run
 $ ofxstatement edit-config
 
 for more information.
-""")
+"""
+            ) from None
         return Parser(fin, account_id)

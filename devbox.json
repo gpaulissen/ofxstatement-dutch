@@ -35,10 +35,10 @@
                 "ruff format ."
             ],
             "check-fix": [
-                "ruff check --fix ."
+                "ruff check --no-show-fixes --quiet --fix ."
             ],
             "check": [
-                "ruff check ."
+                "ruff check --no-show-fixes --quiet ."
             ],
             "pre-commit": [
                 "pre-commit run --all-files"

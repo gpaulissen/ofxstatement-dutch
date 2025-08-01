@@ -199,8 +199,8 @@ class Parser(CsvStatementParser):
             # end date is exclusive for OFX
             if stmt.end_date:
                 stmt.end_date += datetime.timedelta(days=1)
-            Statement.start_balance = stmt.lines[0].start_balance
-            Statement.end_balance = stmt.lines[-1].start_balance + stmt.lines[-1].amount
+            Statement.start_balance = getattr(stmt.lines[0], "start_balance")
+            Statement.end_balance = getattr(stmt.lines[-1], "start_balance") + stmt.lines[-1].amount
 
         return stmt
 
@@ -264,7 +264,7 @@ this line's account: {}".format(self.statement.account_id, line[1])
         stmt_line.id = "{}{}{}.{}".format(dd_mm_yyyy[6:], dd_mm_yyyy[3:5], dd_mm_yyyy[0:2], line[transaction_nr])
 
         # We can not use stmt_line.start_balance since that does not exist
-        stmt_line.start_balance = Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0)
+        setattr(stmt_line, "start_balance", Decimal(str(line[start_balance])) if line[start_balance] is not None else Decimal(0))
 
         if stmt_line.amount < 0:
             stmt_line.trntype = "DEBIT"

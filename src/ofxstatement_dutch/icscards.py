@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-from typing import Iterable, Set, Optional, List, Iterator, Any, Union
-
-import sys
-import locale
-import re
 import io
-from decimal import Decimal
-from datetime import datetime
-from subprocess import check_output, CalledProcessError
+import locale
 import logging
+import re
+import sys
+from datetime import datetime
+from decimal import Decimal
+from subprocess import CalledProcessError, check_output
+from typing import Any, Iterable, Iterator, List, Optional, Set, Union
 
-from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.parser import StatementParser as BaseStatementParser
-from ofxstatement.statement import Statement as BaseStatement, StatementLine
+from ofxstatement.plugin import Plugin as BasePlugin
+from ofxstatement.statement import Statement as BaseStatement
+from ofxstatement.statement import StatementLine
 
 from ofxstatement_dutch.statement import Statement, adjust_statement_line
 
@@ -28,9 +28,7 @@ class Parser(BaseStatementParser):  # type: ignore
 
     def __init__(self, fin: Iterable[str]) -> None:
         super().__init__()
-        self.statement = Statement(
-            bank_id=None, account_id=None, currency="EUR"
-        )  # My Statement
+        self.statement = Statement(bank_id=None, account_id=None, currency="EUR")  # My Statement
         self.fin = fin
         self.unique_id_set = set()
 
@@ -82,17 +80,13 @@ class Parser(BaseStatementParser):  # type: ignore
 
         # convert to str to keep just the last two decimals
         amount_out = sign_out * Decimal(str(amount_out))
-        logger.debug(
-            "get_amount(%s, %s) = %s", amount_in, transaction_type_in, amount_out
-        )
+        logger.debug("get_amount(%s, %s) = %s", amount_in, transaction_type_in, amount_out)
         return amount_out
 
     def split_records(self) -> Iterator[Any]:
         """Return iterable object consisting of a line per transaction"""
 
-        def convert_str_to_list(
-            str: str, max_items: Optional[int] = None, sep: str = r"\s\s+|\t|\n"
-        ) -> List[str]:
+        def convert_str_to_list(str: str, max_items: Optional[int] = None, sep: str = r"\s\s+|\t|\n") -> List[str]:
             return [x for x in re.split(sep, str)[0:max_items]]
 
         first_line = True
@@ -113,9 +107,7 @@ class Parser(BaseStatementParser):  # type: ignore
         # 21 feb         22 feb            APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
         # Since April 2025 (period after month):
         # 21 mrt.        22 mrt.           APPLE.COM/BILL                                  ITUNES.COM                       IE                                                  0,99   Af
-        statement_expr = re.compile(
-            r"^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij|  )$"
-        )
+        statement_expr = re.compile(r"^\d\d [a-z]{3}\.?\s+\d\d [a-z]{3}\.?.+[0-9,.]+\s+(Af|Bij|  )$")
         country = re.compile("^[A-Z][A-Z]$")
 
         for line in self.fin:
@@ -136,9 +128,7 @@ class Parser(BaseStatementParser):  # type: ignore
             )
 
             if first_line and len(row) > 1:
-                assert row == first_line_row, "Expected: {0}\nActual: {1}".format(
-                    first_line_row, row
-                )
+                assert row == first_line_row, "Expected: {0}\nActual: {1}".format(first_line_row, row)
                 first_line = False
 
             if len(row) == 2 and row[1][0:5] == "BIC: ":
@@ -216,11 +206,7 @@ class Parser(BaseStatementParser):  # type: ignore
             (thus changing February 29 to March 1).
 
             """
-            result: datetime = (
-                dt.replace(year=dt.year + years, month=3, day=1)
-                if dt.month == 2 and dt.day == 29
-                else dt.replace(year=dt.year + years)
-            )
+            result: datetime = dt.replace(year=dt.year + years, month=3, day=1) if dt.month == 2 and dt.day == 29 else dt.replace(year=dt.year + years)
             logger.debug("add_years(%s, %d) = %s", dt, years, result)
             return result
 
