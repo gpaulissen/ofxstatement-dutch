@@ -1,9 +1,9 @@
 import os
-from unittest import TestCase
-from decimal import Decimal
-import pytest
 from datetime import datetime
+from decimal import Decimal
+from unittest import TestCase
 
+import pytest
 from ofxstatement.exceptions import ParseError
 
 from ofxstatement_dutch.ing import Plugin
@@ -20,14 +20,10 @@ class ParserTest(TestCase):
         self.assertEqual(statement.account_type, "CHECKING")
 
         self.assertIsNone(statement.start_balance)
-        self.assertEqual(
-            statement.start_date, datetime.strptime("20191213", parser.date_format)
-        )
+        self.assertEqual(statement.start_date, datetime.strptime("20191213", parser.date_format))
 
         self.assertIsNone(statement.end_balance)
-        self.assertEqual(
-            statement.end_date, datetime.strptime("20200214", parser.date_format)
-        )
+        self.assertEqual(statement.end_date, datetime.strptime("20200214", parser.date_format))
 
         # Amount of 0 is skipped
         self.assertEqual(len(statement.lines), 5)
@@ -43,15 +39,11 @@ class ParserTest(TestCase):
         self.assertEqual(statement.lines[1].amount, Decimal("1.25"))
         self.assertFalse(statement.lines[1].payee)
         # "Naam / Omschrijving" is prepended to "Mededelingen"
-        self.assertEqual(
-            statement.lines[1].memo, "Kwijtschelding, Valutadatum: 13-02-2020"
-        )
+        self.assertEqual(statement.lines[1].memo, "Kwijtschelding, Valutadatum: 13-02-2020")
 
         self.assertEqual(statement.lines[2].amount, Decimal("20.00"))
         # "Naam / Omschrijving" is prepended to "Tegenrekening"
-        self.assertEqual(
-            statement.lines[2].payee, "PAULISSEN G J L M (NL99ASNB9999999999)"
-        )
+        self.assertEqual(statement.lines[2].payee, "PAULISSEN G J L M (NL99ASNB9999999999)")
         # "Naam / Omschrijving" is NOT prepended to "Mededelingen"
         self.assertEqual(
             statement.lines[2].memo,
@@ -94,9 +86,7 @@ Kosten rekening IBAN: NL99ASNB9999999999 Valutadatum: 13-12-2019",
 
     def test_ok_Mutatiesoort_Extra_Unquoted(self):
         here = os.path.dirname(__file__)
-        text_filename = os.path.join(
-            here, "samples", "ing_ok_Mutatiesoort_Extra_Unquoted.csv"
-        )
+        text_filename = os.path.join(here, "samples", "ing_ok_Mutatiesoort_Extra_Unquoted.csv")
         self.check(Plugin(None, None).get_parser(text_filename))
 
     @pytest.mark.xfail(raises=ParseError)
@@ -120,9 +110,7 @@ Kosten rekening IBAN: NL99ASNB9999999999 Valutadatum: 13-12-2019",
 
     def test_balance(self):
         here = os.path.dirname(__file__)
-        text_filename = os.path.join(
-            here, "samples", "NL99INGB9999999999_25-11-2019_30-05-2020.csv"
-        )
+        text_filename = os.path.join(here, "samples", "NL99INGB9999999999_25-11-2019_30-05-2020.csv")
         parser = Plugin(None, None).get_parser(text_filename)
         # Lets define some sample csv to parse and write it to file-like object
 

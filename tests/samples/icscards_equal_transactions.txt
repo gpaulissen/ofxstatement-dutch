@@ -73,4 +73,3 @@ Datum        Datum       Omschrijving                                           
 transactie   boeking                                                                          vreemde valuta     in euro's
 
 12 sep       13 sep      SNCF                              MONTIGNY LE B          FR                                     6,15   Af
-

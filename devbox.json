@@ -15,7 +15,8 @@
             ],
             "init-dev": [
                 "devbox run init",
-                "pip install -e '.[dev]'"
+                "pip install -e '.[dev]'",
+                "pre-commit install"
             ],
             "clean": [
                 "git clean -d -x -i"
@@ -33,8 +34,14 @@
             "format": [
                 "ruff format ."
             ],
+            "check-fix": [
+                "ruff check --fix ."
+            ],
             "check": [
-                "ruff check . --fix"
+                "ruff check ."
+            ],
+            "pre-commit": [
+                "pre-commit run --all-files"
             ]
         }
     }

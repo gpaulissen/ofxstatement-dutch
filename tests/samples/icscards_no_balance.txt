@@ -9,7 +9,7 @@ Kvk Amsterdam nr. 33.200.596                                   NL99ZZZ9999999999
 Datum                                       ICS-klantnummer                             Volgnummer                                   Bladnummer
 17 mei 2024                                 99999999999                                 5                                            1 van 1
 Vorig openstaand saldo                      Totaal ontvangen betalingen                 Totaal nieuwe uitgaven                       Nieuw openstaand saldo
-€13,08                              Af      €13,08                    Bij               €0,00                                        €0,00                    
+€13,08                              Af      €13,08                    Bij               €0,00                                        €0,00
 
 
 
@@ -40,4 +40,3 @@ transactie      boeking                                                         
 
 
 Dit product valt onder het depositogarantiestelsel. Meer informatie vindt u op www.icscards.nl/depositogarantiestelsel en op het informatieblad dat u jaarlijks ontvangt.
-

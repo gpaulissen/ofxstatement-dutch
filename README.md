@@ -1,4 +1,4 @@
-# ofxstatement-dutch 
+# ofxstatement-dutch
 
 This project provides custom
 [ofxstatement](https://github.com/kedder/ofxstatement) plugins for these dutch
@@ -252,4 +252,13 @@ account_id = account2
 
 ## Change history
 
-See the Changelog (CHANGELOG.md).
+See the [Changelog](CHANGELOG.md).
+
+## Links
+
+- [Moving to a New Python Tooling Stack: Ruff & Pre-Commit](https://jmanteau.fr/posts/moving-to-a-new-python-tooling-stack-ruff-pre-commit/)
+- [Goodbye to Flake8 and PyLint: faster linting with Ruff](https://pythonspeed.com/articles/pylint-flake8-ruff/)
+- [Good Integration Practices](https://docs.pytest.org/en/7.1.x/explanation/goodpractices.html)
+- [Publishing a Python Package from GitHub to PyPI in 2024](https://medium.com/@blackary/publishing-a-python-package-from-github-to-pypi-in-2024-a6fb8635d45d)
+- [Why You Should Replace Flake8, Black, and isort with Ruff: The Ultimate Python Code Quality Tool](https://medium.com/@zigtecx/why-you-should-replace-flake8-black-and-isort-with-ruff-the-ultimate-python-code-quality-tool-a9372d1ddc1e)
+- [pre-commit](https://pre-commit.com/)

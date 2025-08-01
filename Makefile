@@ -10,7 +10,7 @@ GIT                := git
 ifdef VENV_DIR
 python_bin_dir := $(VENV_DIR)/bin/
 else
-python_bin_dir := 
+python_bin_dir :=
 endif
 
 PYTHON             := $(python_bin_dir)python
@@ -42,7 +42,7 @@ detected_OS := $(patsubst MINGW%,MSYS,$(detected_OS))
 DEVNUL := /dev/null
 WHICH := which
 GREP := grep
-EXE := 
+EXE :=
 endif
 
 

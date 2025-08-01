@@ -1,11 +1,11 @@
 import os
-import pytest
-from unittest import TestCase
-from decimal import Decimal
 from datetime import datetime
+from decimal import Decimal
+from unittest import TestCase
 
-from ofxstatement.statement import StatementLine
+import pytest
 from ofxstatement.exceptions import ParseError
+from ofxstatement.statement import StatementLine
 
 from ofxstatement_dutch.degiro import Plugin
 
@@ -26,12 +26,8 @@ class ParserTest(TestCase):
         self.assertEqual(statement.account_type, "CHECKING")
         self.assertIsNone(statement.start_balance)
         self.assertIsNone(statement.end_balance)
-        self.assertEqual(
-            statement.start_date, datetime.strptime("19-06-2019", parser.date_format)
-        )
-        self.assertEqual(
-            statement.end_date, datetime.strptime("22-06-2019", parser.date_format)
-        )
+        self.assertEqual(statement.start_date, datetime.strptime("19-06-2019", parser.date_format))
+        self.assertEqual(statement.end_date, datetime.strptime("22-06-2019", parser.date_format))
 
         lines = []
 
@@ -132,12 +128,8 @@ Koop 0,001337 @ 9.986,9062 EUR MORGAN STANLEY EUR LIQUIDITY FUND \
                 amount="8,72",
             )
         )
-        lines.append(
-            StatementLine(date="21-06-2019", memo="Terugstorting", amount="-334,35")
-        )
-        lines.append(
-            StatementLine(date="21-06-2019", memo="Terugstorting #2", amount="-334,35")
-        )
+        lines.append(StatementLine(date="21-06-2019", memo="Terugstorting", amount="-334,35"))
+        lines.append(StatementLine(date="21-06-2019", memo="Terugstorting #2", amount="-334,35"))
         lines.append(
             StatementLine(
                 date="21-06-2019",
@@ -146,11 +138,7 @@ Koop 0,001337 @ 9.986,9062 EUR MORGAN STANLEY EUR LIQUIDITY FUND \
                 amount="-2,00",
             )
         )
-        lines.append(
-            StatementLine(
-                date="21-06-2019", memo="DEGIRO Aansluitingskosten", amount="-0,13"
-            )
-        )
+        lines.append(StatementLine(date="21-06-2019", memo="DEGIRO Aansluitingskosten", amount="-0,13"))
         lines.append(
             StatementLine(
                 date="21-06-2019",
@@ -159,9 +147,7 @@ Koop 0,001337 @ 9.986,9062 EUR MORGAN STANLEY EUR LIQUIDITY FUND \
                 amount="336,48",
             )
         )
-        lines.append(
-            StatementLine(date="19-06-2019", memo="iDEAL storting", amount="557,10")
-        )
+        lines.append(StatementLine(date="19-06-2019", memo="iDEAL storting", amount="557,10"))
         lines.append(
             StatementLine(
                 date="19-06-2019",
@@ -218,18 +204,11 @@ Koop 0,001337 @ 9.986,9062 EUR MORGAN STANLEY EUR LIQUIDITY FUND \
         lines.append(StatementLine(date="01-02-2019", memo="Rente", amount="-0,02"))
         lines.append(StatementLine(date="02-01-2019", memo="Rente #2", amount="-0,02"))
 
-        lines = [
-            line
-            for line in lines
-            if line.amount
-            and line.memo in ["iDEAL storting", "Terugstorting", "Terugstorting #2"]
-        ]
+        lines = [line for line in lines if line.amount and line.memo in ["iDEAL storting", "Terugstorting", "Terugstorting #2"]]
         self.assertEqual(len(statement.lines), len(lines))
 
         for idx, line in enumerate(statement.lines):
-            self.assertEqual(
-                line.date, datetime.strptime(lines[idx].date, parser.date_format)
-            )
+            self.assertEqual(line.date, datetime.strptime(lines[idx].date, parser.date_format))
             self.assertEqual(line.memo, lines[idx].memo)
             self.assertEqual(
                 line.amount,

@@ -1,9 +1,9 @@
 import os
-from unittest import TestCase
-from decimal import Decimal
-import pytest
 from datetime import datetime
+from decimal import Decimal
+from unittest import TestCase
 
+import pytest
 from ofxstatement.exceptions import ParseError
 
 from ofxstatement_dutch.asn import Plugin
@@ -12,9 +12,7 @@ from ofxstatement_dutch.asn import Plugin
 class ParserTest(TestCase):
     def test_ok(self):
         here = os.path.dirname(__file__)
-        text_filename = os.path.join(
-            here, "samples", "transactie-historie_NL00ASNB9999999999_20220717204133.csv"
-        )
+        text_filename = os.path.join(here, "samples", "transactie-historie_NL00ASNB9999999999_20220717204133.csv")
         parser = Plugin(None, None).get_parser(text_filename)
 
         # And parse csv:
@@ -26,9 +24,7 @@ class ParserTest(TestCase):
         self.assertEqual(statement.account_type, "CHECKING")
 
         self.assertEqual(statement.start_balance, Decimal("130.44"))
-        self.assertEqual(
-            statement.start_date, datetime.strptime("17-06-2022", parser.date_format)
-        )
+        self.assertEqual(statement.start_date, datetime.strptime("17-06-2022", parser.date_format))
 
         self.assertEqual(statement.end_balance, Decimal("644.24") + Decimal("-560.00"))
         self.assertEqual(
@@ -42,15 +38,9 @@ class ParserTest(TestCase):
         self.assertEqual(len(statement.lines), 11)
         self.assertEqual(statement.lines[0].id, "20220617.51392971")
         self.assertEqual(statement.lines[0].amount, Decimal("223.77"))
-        self.assertEqual(
-            statement.lines[0].bank_account_to.acct_id, "NL99ASNB0000000000"
-        )
-        self.assertEqual(
-            statement.lines[0].payee, "XXXXXXXXX Z Z Z Z (NL99ASNB0000000000)"
-        )
-        self.assertEqual(
-            statement.lines[0].date, datetime.strptime("17-06-2022", parser.date_format)
-        )
+        self.assertEqual(statement.lines[0].bank_account_to.acct_id, "NL99ASNB0000000000")
+        self.assertEqual(statement.lines[0].payee, "XXXXXXXXX Z Z Z Z (NL99ASNB0000000000)")
+        self.assertEqual(statement.lines[0].date, datetime.strptime("17-06-2022", parser.date_format))
         self.assertEqual(statement.lines[0].date_user, statement.lines[0].date)
 
         self.assertEqual(statement.lines[2].id, "20220625.50951652")
@@ -62,9 +52,7 @@ class ParserTest(TestCase):
         )
 
         self.assertEqual(statement.lines[5].id, "20220629.50139616")
-        self.assertEqual(
-            statement.lines[5].date, datetime.strptime("29-06-2022", parser.date_format)
-        )
+        self.assertEqual(statement.lines[5].date, datetime.strptime("29-06-2022", parser.date_format))
         self.assertEqual(
             statement.lines[5].date_user,
             datetime.strptime("28-06-2022", parser.date_format),

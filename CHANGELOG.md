@@ -149,4 +149,3 @@ used in the Makefile.
 - First version to convert:
   * ICSCards, The Netherlands, PDF (https://icscards.nl/)
   * ING bank, The Netherlands, CSV (https://www.ing.nl/)
-
