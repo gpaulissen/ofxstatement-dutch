@@ -1,26 +1,28 @@
 # -*- coding: utf-8 -*-
-from typing import Optional, List, Iterator, Any, Dict, TextIO
-
-import re
 import csv
-import sys
 import datetime
 import logging
+import re
+import sys
 from decimal import Decimal
+from typing import Any, Dict, Iterator, List, Optional, TextIO
 
-from ofxstatement.plugin import Plugin as BasePlugin
-from ofxstatement.parser import CsvStatementParser
 from ofxstatement.exceptions import ParseError
+from ofxstatement.parser import CsvStatementParser
+from ofxstatement.plugin import Plugin as BasePlugin
 from ofxstatement.statement import (
     BankAccount,
-    Statement as BaseStatement,
     StatementLine,
+)
+from ofxstatement.statement import (
+    Statement as BaseStatement,
 )
 
 from ofxstatement_dutch.statement import Statement
 
 # Need Python 3 for super() syntax
-assert sys.version_info[0] >= 3, "At least Python 3 is required."
+if not sys.version_info[0] >= 3:
+    raise ValueError("At least Python 3 is required.")
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -199,10 +201,8 @@ class Parser(CsvStatementParser):
             # end date is exclusive for OFX
             if stmt.end_date:
                 stmt.end_date += datetime.timedelta(days=1)
-            Statement.start_balance = getattr(stmt.lines[0], "start_balance")
-            Statement.end_balance = (
-                getattr(stmt.lines[-1], "start_balance") + stmt.lines[-1].amount
-            )
+            Statement.start_balance = stmt.lines[0].start_balance
+            Statement.end_balance = stmt.lines[-1].start_balance + stmt.lines[-1].amount
 
         return stmt
 
@@ -222,7 +222,7 @@ class Parser(CsvStatementParser):
             stmt_line = self.parse_transaction(line)
 
         except Exception as e:
-            raise ParseError(self.cur_record, str(e))
+            raise ParseError(self.cur_record, str(e)) from None
 
         return stmt_line
 
@@ -232,10 +232,11 @@ class Parser(CsvStatementParser):
 
         # line[1] contains the account number
         if self.statement.account_id:
-            assert self.statement.account_id == line[1], (
-                "Only one account is allowed; previous account: {}, \
+            if not self.statement.account_id == line[1]:
+                raise ValueError(
+                    "Only one account is allowed; previous account: {}, \
 this line's account: {}".format(self.statement.account_id, line[1])
-            )
+                )
         else:
             self.statement.account_id = line[1]
 
@@ -255,22 +256,24 @@ this line's account: {}".format(self.statement.account_id, line[1])
 
         # The unique id is a combination of 'Journaaldatum' and 'Volgnummer transactie'
         # Let id be <Journaaldatum in yyyymmdd format>.<Volgnummer transactie>
-        assert self.mappings["date"] == 11  # Journaaldatum
-        assert transaction_nr == 15  # Volgnummer transactie
+        if not self.mappings["date"] == 11:  # Journaaldatum
+            raise ValueError("Journaaldatum must be column 11")
+        if not transaction_nr == 15:  # Volgnummer transactie
+            raise ValueError(f"transaction_nr ({transaction_nr}) must be 15")
 
-        assert line[self.mappings["date"]]
+        if not line[self.mappings["date"]]:
+            raise ValueError("Journaaldatum is not found")
+
         dd_mm_yyyy: str = str(line[self.mappings["date"]])
         stmt_line.id = "{}{}{}.{}".format(
             dd_mm_yyyy[6:], dd_mm_yyyy[3:5], dd_mm_yyyy[0:2], line[transaction_nr]
         )
 
         # We can not use stmt_line.start_balance since that does not exist
-        setattr(
-            stmt_line,
-            "start_balance",
+        stmt_line.start_balance = (
             Decimal(str(line[start_balance]))
             if line[start_balance] is not None
-            else Decimal(0),
+            else Decimal(0)
         )
 
         if stmt_line.amount < 0:
@@ -297,5 +300,5 @@ class Plugin(BasePlugin):
         account_id: Optional[str] = None
         if m:
             account_id = m.group(1)
-        fin = open(filename, "r")  # , encoding="ISO-8859-1")
-        return Parser(fin, account_id)
+        with open(filename, "r") as fin:  # , encoding="ISO-8859-1")
+            return Parser(fin, account_id)
