@@ -1,19 +1,22 @@
 {
-    "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
-    "packages": [
-        "pixi@0.49.0"
-    ],
+    "$schema":  "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
+    "packages": ["python@3.14"],
     "env": {
         "PY_IGNORE_IMPORTMISMATCH": "1"
     },
     "shell": {
+        "init_hook": [
+            ". $VENV_DIR/bin/activate"
+        ],
         "scripts": {
             "init": [
-                "pixi install --all"
+                "pip install --upgrade pip",
+                "pip install -e ."
             ],
             "init-dev": [
                 "devbox run init",
-                "pixi run --environment dev pre-commit install"
+                "pip install -e '.[dev]'",
+                "pre-commit install"
             ],
             "clean": [
                 "git clean -d -x -i"
@@ -27,26 +30,26 @@
                 "devbox run check"
             ],
             "test-mypy": [
-                "pixi run --environment dev mypy --show-error-codes src"
+                "mypy --show-error-codes src"
             ],
             "test-pytest": [
-                "pixi run --environment dev python -m pytest --log-level=INFO --exitfirst tests"
+                "python -m pytest --log-level=INFO --exitfirst tests"
             ],
             "format": [
-                "pixi run --environment dev ruff format ."
+                "ruff format ."
             ],
             "check-fix": [
-                "pixi run --environment dev ruff check --no-show-fixes --quiet --fix ."
+                "ruff check --no-show-fixes --quiet --fix ."
             ],
             "check": [
-                "pixi run --environment dev ruff check --no-show-fixes --quiet ."
+                "ruff check --no-show-fixes --quiet ."
             ],
             "pre-commit": [
-                "pixi run --environment dev pre-commit run --all-files"
+                "pre-commit run --all-files"
             ],
             "sort": [
-                "pixi run --environment dev ruff check --select I --fix .",
-                "pixi run --environment dev ruff format ."
+                "ruff check --select I --fix .",
+                "ruff format ."
             ]
         }
     }
